@@ -13,9 +13,9 @@
             <h1>Sistem Produksi</h1>
         </div>
         <div class="nav-menu">
-            <button onclick="showAddOrderModal()">Rencana Produksi Baru</button>
-            <a href="shipping_plan.html">Rencana Pengiriman</a>
-            <a href="charts.html">Analisis Data (Charts)</a>
+            <a href="order_form.html" class="nav-button">Rencana Produksi Baru</a>
+            <a href="shipping_plan.html" class="nav-button">Rencana Pengiriman</a>
+            <a href="charts.html" class="nav-button">Analisis Data (Charts)</a>
             <span style="margin-left: 20px;">Selamat datang, <strong id="userName">User</strong> (<span id="userRole"></span>)</span>
         </div>
     </div>
@@ -53,36 +53,6 @@
                     <input type="password" id="loginPassword" required>
                 </div>
                 <button type="submit">Masuk</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="orderModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>Input Rencana Produksi</h2>
-            <form id="orderForm">
-                <div class="form-group">
-                    <label for="customerName">Nama Customer</label>
-                    <input type="text" id="customerName" required>
-                </div>
-                <div class="form-group">
-                    <label for="prodNumber">Nomor Produksi</label>
-                    <input type="text" id="prodNumber" required>
-                </div>
-                <div class="form-group">
-                    <label for="itemName">Nama Barang</label>
-                    <input type="text" id="itemName" required>
-                </div>
-                <div class="form-group">
-                    <label for="itemNumber">Nomor Barang</label>
-                    <input type="text" id="itemNumber" required>
-                </div>
-                <div class="form-group">
-                    <label for="startDate">Tanggal Mulai Produksi</label>
-                    <input type="date" id="startDate" required>
-                </div>
-                <button type="submit">Simpan</button>
             </form>
         </div>
     </div>
