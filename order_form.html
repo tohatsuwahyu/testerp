@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Input Rencana Produksi</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Logo Perusahaan">
+            <h1>Sistem Produksi</h1>
+        </div>
+        <div class="nav-menu">
+            <a href="index.html" class="nav-button">Dasbor Produksi</a>
+            <a href="shipping_plan.html" class="nav-button">Rencana Pengiriman</a>
+            <a href="charts.html" class="nav-button">Analisis Data (Charts)</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="card">
+            <h2>Input Rencana Produksi</h2>
+            <form id="orderForm">
+                <div class="form-group">
+                    <label for="customerName">Nama Customer</label>
+                    <input type="text" id="customerName" required>
+                </div>
+                <div class="form-group">
+                    <label for="prodNumber">Nomor Produksi</label>
+                    <input type="text" id="prodNumber" required>
+                </div>
+                <div class="form-group">
+                    <label for="itemName">Nama Barang</label>
+                    <input type="text" id="itemName" required>
+                </div>
+                <div class="form-group">
+                    <label for="itemNumber">Nomor Barang</label>
+                    <input type="text" id="itemNumber" required>
+                </div>
+                <div class="form-group">
+                    <label for="startDate">Tanggal Mulai Produksi</label>
+                    <input type="date" id="startDate" required>
+                </div>
+                <button type="submit">Simpan & Cetak Kartu</button>
+            </form>
+        </div>
+    </div>
+    
+    <script async defer src="https://apis.google.com/js/api.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/script.js"></script>
+</body>
+</html>
