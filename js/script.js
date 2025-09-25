@@ -75,14 +75,12 @@ async function updateData(sheetId, range, data) {
     });
 }
 
-// --- LOGIKA PROGRAM UNTUK SETIAP HALAMAN ---
+// --- LOGIKA HALAMAN ---
 
-// Logika halaman index.html
+// Logika halaman index.html (Dasbor)
 if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
     const loginModal = document.getElementById('loginModal');
     const loginForm = document.getElementById('loginForm');
-    const orderModal = document.getElementById('orderModal');
-    const orderForm = document.getElementById('orderForm');
     const ngModal = document.getElementById('ngModal');
     const ngForm = document.getElementById('ngForm');
 
@@ -118,12 +116,14 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
                 let optionsHtml = '';
                 const currentStageIndex = productionStages.indexOf(order.status);
                 productionStages.forEach((stage, index) => {
-                    // Cek izin peran untuk status
                     let isAllowed = true;
-                    if ((stage === '検査工程' || stage === '検査保留') && userRole !== 'Inspeksi') {
+                    if (stage.includes('工程') && stage !== '検査工程' && userRole !== 'Produksi') {
                         isAllowed = false;
                     }
-                    if ((stage === '出荷準備' || stage === '出荷済') && userRole !== 'PPIC') {
+                    if (stage.includes('検査') && userRole !== 'Inspeksi') {
+                        isAllowed = false;
+                    }
+                    if (stage.includes('出荷') && userRole !== 'PPIC') {
                         isAllowed = false;
                     }
                     
@@ -241,13 +241,6 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
         }
     });
 
-    document.getElementById('addOrderBtn').onclick = () => {
-        if (userRole === 'PPIC') {
-            orderModal.style.display = 'block';
-        } else {
-            alert('Hanya PPIC yang dapat menambahkan rencana produksi.');
-        }
-    };
     document.querySelectorAll('.close-button').forEach(btn => btn.onclick = () => btn.closest('.modal').style.display = 'none');
     window.onclick = (event) => {
         if (event.target.classList.contains('modal')) {
