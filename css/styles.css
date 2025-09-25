@@ -1,0 +1,188 @@
+:root {
+    --primary-color: #004c99; 
+    --secondary-color: #f5f7fa;
+    --border-color: #dce1e6;
+    --text-color: #333;
+    --text-light: #777;
+    --success-color: #5cb85c;
+    --warning-color: #f0ad4e;
+    --info-color: #5bc0de;
+    --danger-color: #d9534f;
+    --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --header-bg: #fff;
+}
+body {
+    font-family: var(--font-family);
+    background-color: var(--secondary-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+}
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 30px;
+    background-color: var(--header-bg);
+    border-bottom: 3px solid var(--primary-color);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.header .logo {
+    display: flex;
+    align-items: center;
+}
+.header .logo img {
+    height: 40px;
+    margin-right: 15px;
+}
+.header .logo h1 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 1.8em;
+}
+.nav-menu button, .nav-menu a {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-left: 10px;
+    transition: background-color 0.3s, transform 0.2s;
+    text-decoration: none;
+    display: inline-block;
+}
+.nav-menu button:hover, .nav-menu a:hover {
+    background-color: #003366;
+    transform: translateY(-2px);
+}
+.container {
+    max-width: 1600px;
+    margin: 20px auto;
+    padding: 0 20px;
+}
+h2 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+    margin-top: 30px;
+}
+.dashboard-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+.card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+th, td {
+    text-align: left;
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+th {
+    background-color: #e9ecef;
+    font-weight: 600;
+}
+tr:hover {
+    background-color: #f9f9f9;
+}
+.status-cell {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.4;
+}
+.status-cell .status-badge {
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+    color: white;
+    display: inline-block;
+    margin-bottom: 5px;
+}
+/* Color coding */
+.status-badge[data-status="レーザ工程"], .status-badge[data-status="曲げ工程"] { background-color: #a0a0a0; }
+.status-badge[data-status="外枠組立工程"], .status-badge[data-status="シャッター組立工程"], .status-badge[data-status="シャッター溶接工程"] { background-color: #5bc0de; }
+.status-badge[data-status="コーキング工程"], .status-badge[data-status="外枠塗装工程"] { background-color: #6f42c1; }
+.status-badge[data-status="組立工程"] { background-color: #fd7e14; }
+.status-badge[data-status="検査工程"] { background-color: #f0ad4e; }
+.status-badge[data-status="検査保留"], .status-badge[data-status="修正中"] { background-color: #d9534f; }
+.status-badge[data-status="出荷準備"] { background-color: #5cb85c; }
+.status-badge[data-status="出荷済"] { background-color: #343a40; }
+select.action-select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border-color);
+    width: 100%;
+}
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+    padding-top: 60px;
+}
+.modal-content {
+    background-color: #fefefe;
+    margin: 5% auto;
+    padding: 30px;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+}
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+.form-group {
+    margin-bottom: 20px;
+}
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+.form-group input, .form-group textarea, .form-group select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+.stock-info {
+    font-size: 1.5em;
+    font-weight: bold;
+    background: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+}
+.stock-info span {
+    color: var(--success-color);
+}
+#chart-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    margin: 20px auto;
+}
