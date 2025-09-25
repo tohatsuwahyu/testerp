@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Produksi ERP</title>
+    <title>ERP</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <div class="header">
         <div class="logo">
-            <img src="tsh.png" alt="Logo Perusahaan">
+            <img src="images/tsh.png" alt="Logo Perusahaan">
             <h1>Sistem Produksi</h1>
         </div>
         <div class="nav-menu">
-            <a href="order_form.html" class="nav-button">生産現品票入力フォーム</a>
-            <a href="input_shipping.html" class="nav-button">出荷確認書入力フォーム</a>
-            <a href="shipping_plan.html" class="nav-button">出荷予定</a>
+            <a href="order_form.html" class="nav-button">生産現品票入力</a>
+            <a href="input_shipping.html" class="nav-button">出荷確認書入力</a>
+            <a href="shipping_plan.html" class="nav-button">出荷予定表</a>
             <a href="charts.html" class="nav-button">チャート</a>
             <span style="margin-left: 20px;">Selamat datang, <strong id="userName">User</strong> (<span id="userRole"></span>)</span>
         </div>
@@ -24,7 +24,7 @@
     <div class="container">
         <div class="stock-info">完成品在庫: <span id="stockCount">0</span> Unit</div>
         <div class="card">
-            <h2>製造工程ステータス</h2>
+            <h2>Status Proses Produksi</h2>
             <table id="productionTable">
                 <thead>
                     <tr>
@@ -44,16 +44,16 @@
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <h2>Login</h2>
-            <form id="ログイン">
+            <form id="loginForm">
                 <div class="form-group">
                     <label for="loginEmail">Email</label>
                     <input type="email" id="loginEmail" required>
                 </div>
                 <div class="form-group">
-                    <label for="loginPassword">パスワード</label>
+                    <label for="loginPassword">Kata Sandi</label>
                     <input type="password" id="loginPassword" required>
                 </div>
-                <button type="submit">Masuk</button>
+                <button type="submit">確定</button>
             </form>
         </div>
     </div>
@@ -61,14 +61,14 @@
     <div id="ngModal" class="modal">
         <div class="modal-content">
             <span class="close-button">&times;</span>
-            <h2>Barang NG - Tindakan Korektif</h2>
+            <h2>不具合品 - 処置</h2>
             <form id="ngForm">
                 <div class="form-group">
-                    <label for="ngReason">不合格理由</label>
+                    <label for="ngReason">不具合品理由</label>
                     <textarea id="ngReason" required></textarea>
                 </div>
                 <div class="form-group">
-                    <label>不合格品の処置</label>
+                    <label>不具合品の処置</label>
                     <div>
                         <input type="radio" id="dispositionRepair" name="ngDisposition" value="修正" required>
                         <label for="dispositionRepair">修正 (Perbaikan)</label>
