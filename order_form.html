@@ -3,47 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Input Rencana Produksi</title>
+    <title>生産現品票入力</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <div class="header">
         <div class="logo">
-            <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Logo Perusahaan">
-            <h1>Sistem Produksi</h1>
+            <img src="images/tsh.png" alt="Logo Perusahaan">
+            <h1>製造工程システム</h1>
         </div>
         <div class="nav-menu">
-            <a href="index.html" class="nav-button">Dasbor Produksi</a>
-            <a href="shipping_plan.html" class="nav-button">Rencana Pengiriman</a>
-            <a href="charts.html" class="nav-button">Analisis Data (Charts)</a>
+            <a href="index.html" class="nav-button">ホーム</a>
+            <a href="input_shipping.html" class="nav-button">出荷確認書入力</a>
+            <a href="shipping_plan.html" class="nav-button">出荷予定表</a>
+            <a href="charts.html" class="nav-button">チャート</a>
         </div>
     </div>
 
     <div class="container">
         <div class="card">
-            <h2>Input Rencana Produksi</h2>
+            <h2>生産現品票入力</h2>
             <form id="orderForm">
                 <div class="form-group">
-                    <label for="customerName">Nama Customer</label>
+                    <label for="customerName">得意先</label>
                     <input type="text" id="customerName" required>
                 </div>
                 <div class="form-group">
-                    <label for="prodNumber">Nomor Produksi</label>
+                    <label for="prodNumber">製造番号</label>
                     <input type="text" id="prodNumber" required>
                 </div>
                 <div class="form-group">
-                    <label for="itemName">Nama Barang</label>
+                    <label for="itemName">品名</label>
                     <input type="text" id="itemName" required>
                 </div>
                 <div class="form-group">
-                    <label for="itemNumber">Nomor Barang</label>
+                    <label for="itemNumber">品番</label>
                     <input type="text" id="itemNumber" required>
                 </div>
                 <div class="form-group">
-                    <label for="startDate">Tanggal Mulai Produksi</label>
+                    <label for="startDate">製造開始日</label>
                     <input type="date" id="startDate" required>
                 </div>
-                <button type="submit">Simpan & Cetak Kartu</button>
+                <button type="submit">保存・印刷</button>
             </form>
         </div>
     </div>
