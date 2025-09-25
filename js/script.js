@@ -77,6 +77,10 @@ async function updateData(sheetId, range, data) {
 
 // --- LOGIKA HALAMAN ---
 
+// ... (Bagian loadGoogleAPI dan USERS tetap sama) ...
+
+// --- LOGIKA HALAMAN ---
+
 // Logika halaman index.html (Dasbor)
 if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
     const loginModal = document.getElementById('loginModal');
@@ -107,6 +111,7 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
         const productionTableBody = document.querySelector('#productionTable tbody');
         productionTableBody.innerHTML = '';
         
+        // ... (Logika renderTables dan updateStatus tetap sama, hanya untuk konteks) ...
         let stockCount = 0;
         productionOrders.forEach(order => {
             if (order.status === '出荷済') {
@@ -117,14 +122,19 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
                 const currentStageIndex = productionStages.indexOf(order.status);
                 productionStages.forEach((stage, index) => {
                     let isAllowed = true;
-                    if (stage.includes('工程') && stage !== '検査工程' && userRole !== 'Produksi') {
-                        isAllowed = false;
-                    }
                     if (stage.includes('検査') && userRole !== 'Inspeksi') {
                         isAllowed = false;
                     }
                     if (stage.includes('出荷') && userRole !== 'PPIC') {
                         isAllowed = false;
+                    }
+                    if ((stage.includes('工程') && !stage.includes('検査')) && userRole !== 'Produksi' && userRole !== 'PPIC') {
+                        isAllowed = false;
+                    }
+
+                    // PPIC diizinkan di semua tahap untuk memantau, kecuali inspeksi
+                    if (userRole === 'PPIC' && (stage.includes('検査') || stage.includes('出荷'))) {
+                        isAllowed = true; // PPIC boleh di tahap akhir
                     }
                     
                     if (index >= currentStageIndex && isAllowed) {
@@ -177,6 +187,8 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
         }
     }
     
+    // ... (Logika ngForm dan loginForm tetap sama) ...
+
     ngForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const orderId = this.dataset.orderId;
@@ -250,6 +262,68 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
 
     initializeDashboard();
 
+} else if (window.location.pathname.endsWith('order_form.html')) {
+    // Logika halaman input rencana produksi
+    async function initializeOrderForm() {
+        await loadGoogleAPI();
+        if (localStorage.getItem('userRole') !== 'PPIC') {
+            alert('Akses ditolak. Hanya PPIC yang dapat menambah rencana produksi.');
+            window.location.href = 'index.html';
+        }
+    }
+    const orderForm = document.getElementById('orderForm');
+
+    orderForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const newOrder = {
+            id: `prod-${Date.now()}`,
+            prodNumber: document.getElementById('prodNumber').value,
+            customerName: document.getElementById('customerName').value,
+            itemName: document.getElementById('itemName').value,
+            itemNumber: document.getElementById('itemNumber').value,
+            startDate: document.getElementById('startDate').value,
+            status: 'レーザ工程',
+            updatedAt: new Date().toISOString(),
+            updatedBy: localStorage.getItem('loggedInUser'),
+            ngReason: '', ngDisposition: '', ngCorrection: ''
+        };
+        const newRow = Object.values(newOrder);
+        await appendData(CONFIG.PRODUCTION_SHEET_ID, newRow);
+        alert('Rencana produksi berhasil ditambahkan!');
+        orderForm.reset();
+    });
+    document.addEventListener('DOMContentLoaded', initializeOrderForm);
+
+} else if (window.location.pathname.endsWith('input_shipping.html')) {
+    // Logika halaman input rencana pengiriman (BARU)
+    async function initializeShippingForm() {
+        await loadGoogleAPI();
+        if (localStorage.getItem('userRole') !== 'PPIC') {
+            alert('Akses ditolak. Hanya PPIC yang dapat menambah rencana pengiriman.');
+            window.location.href = 'index.html';
+        }
+    }
+
+    const shippingForm = document.getElementById('shippingForm');
+    shippingForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const shippingData = {
+            '得意先': document.getElementById('customerName').value,
+            '図番': document.getElementById('itemNumber').value,
+            '機種': document.getElementById('model').value,
+            '商品名': document.getElementById('productName').value,
+            '数量': document.getElementById('quantity').value,
+            '送り先': document.getElementById('destination').value,
+            '注番': document.getElementById('orderNumber').value,
+            '備考': document.getElementById('remarks').value
+        };
+        const newRow = Object.values(shippingData);
+        await appendData(CONFIG.SHIPPING_SHEET_ID, newRow);
+        alert('Rencana pengiriman berhasil disimpan!');
+        shippingForm.reset();
+    });
+    document.addEventListener('DOMContentLoaded', initializeShippingForm);
+
 } else if (window.location.pathname.endsWith('shipping_plan.html')) {
     // Logika halaman shipping_plan.html
     async function initializeShipping() {
@@ -292,7 +366,8 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
         const ctx = document.getElementById('stockChart').getContext('2d');
         const labels = ['Stok Barang Jadi'];
         const data = [productionOrders.filter(o => o.status === '出荷済').length];
-        new Chart(ctx, {
+        if (window.myStockChart) window.myStockChart.destroy();
+        window.myStockChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: labels,
@@ -314,7 +389,8 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
             acc[customer] = (acc[customer] || 0) + 1;
             return acc;
         }, {});
-        new Chart(ctx, {
+        if (window.myShippingChart) window.myShippingChart.destroy();
+        window.myShippingChart = new Chart(ctx, {
             type: 'pie',
             data: {
                 labels: Object.keys(customerCounts),
@@ -335,7 +411,8 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
             acc[reason] = (acc[reason] || 0) + 1;
             return acc;
         }, {});
-        new Chart(ctx, {
+        if (window.myNGChart) window.myNGChart.destroy();
+        window.myNGChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: Object.keys(ngCounts),
