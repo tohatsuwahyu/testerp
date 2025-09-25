@@ -9,30 +9,30 @@
 <body>
     <div class="header">
         <div class="logo">
-            <img src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" alt="Logo Perusahaan">
+            <img src="tsh.png" alt="Logo Perusahaan">
             <h1>Sistem Produksi</h1>
         </div>
         <div class="nav-menu">
-            <a href="order_form.html" class="nav-button">Input Rencana Produksi</a>
-            <a href="input_shipping.html" class="nav-button">Input Rencana Kirim</a>
-            <a href="shipping_plan.html" class="nav-button">Jadwal Pengiriman</a>
-            <a href="charts.html" class="nav-button">Analisis Data (Charts)</a>
+            <a href="order_form.html" class="nav-button">生産現品票入力フォーム</a>
+            <a href="input_shipping.html" class="nav-button">出荷確認書入力フォーム</a>
+            <a href="shipping_plan.html" class="nav-button">出荷予定</a>
+            <a href="charts.html" class="nav-button">チャート</a>
             <span style="margin-left: 20px;">Selamat datang, <strong id="userName">User</strong> (<span id="userRole"></span>)</span>
         </div>
     </div>
 
     <div class="container">
-        <div class="stock-info">Stok Barang Jadi: <span id="stockCount">0</span> Unit</div>
+        <div class="stock-info">完成品在庫: <span id="stockCount">0</span> Unit</div>
         <div class="card">
-            <h2>Status Proses Produksi</h2>
+            <h2>製造工程ステータス</h2>
             <table id="productionTable">
                 <thead>
                     <tr>
-                        <th>No. Produksi</th>
-                        <th>Customer</th>
-                        <th>Nama Barang</th>
-                        <th>Status Saat Ini</th>
-                        <th>Aksi</th>
+                        <th>製造番号</th>
+                        <th>得意先</th>
+                        <th>品名</th>
+                        <th>ステータス</th>
+                        <th>アクション</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -44,13 +44,13 @@
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <h2>Login</h2>
-            <form id="loginForm">
+            <form id="ログイン">
                 <div class="form-group">
                     <label for="loginEmail">Email</label>
                     <input type="email" id="loginEmail" required>
                 </div>
                 <div class="form-group">
-                    <label for="loginPassword">Kata Sandi</label>
+                    <label for="loginPassword">パスワード</label>
                     <input type="password" id="loginPassword" required>
                 </div>
                 <button type="submit">Masuk</button>
@@ -64,25 +64,25 @@
             <h2>Barang NG - Tindakan Korektif</h2>
             <form id="ngForm">
                 <div class="form-group">
-                    <label for="ngReason">不合格理由 (Alasan NG)</label>
+                    <label for="ngReason">不合格理由</label>
                     <textarea id="ngReason" required></textarea>
                 </div>
                 <div class="form-group">
-                    <label>不合格品の処置 (Tindakan)</label>
+                    <label>不合格品の処置</label>
                     <div>
                         <input type="radio" id="dispositionRepair" name="ngDisposition" value="修正" required>
                         <label for="dispositionRepair">修正 (Perbaikan)</label>
                     </div>
                     <div>
                         <input type="radio" id="dispositionNew" name="ngDisposition" value="新品を追加投入">
-                        <label for="dispositionNew">新品を追加投入 (Masukkan produk baru)</label>
+                        <label for="dispositionNew">新品を追加投入</label>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="ngCorrection">修正内容 (Isi Perbaikan)</label>
+                    <label for="ngCorrection">修正内容</label>
                     <textarea id="ngCorrection"></textarea>
                 </div>
-                <button type="submit">Simpan & Perbarui Status</button>
+                <button type="submit">更新・保存</button>
             </form>
         </div>
     </div>
