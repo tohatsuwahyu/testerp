@@ -12,7 +12,7 @@ function loadGoogleAPI() {
     });
 }
 
-// Data pengguna simulasi
+// Data pengguna simulasi (Gunakan untuk login internal)
 const USERS = {
     "ppic@example.com": { password: "123", role: "PPIC" },
     "produksi@example.com": { password: "123", role: "Produksi" },
@@ -30,7 +30,7 @@ const productionStages = [
     '検査工程', '検査保留', '修正中', '出荷準備', '出荷済'
 ];
 
-// --- FUNGSI UTAMA UNTUK MENGAMBIL DAN MENYIMPAN DATA KE GOOGLE SHEETS ---
+// --- FUNGSI API GOOGLE SHEETS ---
 
 async function fetchData(sheetId, range) {
     const response = await gapi.client.sheets.spreadsheets.values.get({
@@ -77,10 +77,6 @@ async function updateData(sheetId, range, data) {
 
 // --- LOGIKA HALAMAN ---
 
-// ... (Bagian loadGoogleAPI dan USERS tetap sama) ...
-
-// --- LOGIKA HALAMAN ---
-
 // Logika halaman index.html (Dasbor)
 if (window.location.pathname.endsWith('index.html') || window.location.pathname === '/') {
     const loginModal = document.getElementById('loginModal');
@@ -111,7 +107,6 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
         const productionTableBody = document.querySelector('#productionTable tbody');
         productionTableBody.innerHTML = '';
         
-        // ... (Logika renderTables dan updateStatus tetap sama, hanya untuk konteks) ...
         let stockCount = 0;
         productionOrders.forEach(order => {
             if (order.status === '出荷済') {
@@ -132,9 +127,8 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
                         isAllowed = false;
                     }
 
-                    // PPIC diizinkan di semua tahap untuk memantau, kecuali inspeksi
                     if (userRole === 'PPIC' && (stage.includes('検査') || stage.includes('出荷'))) {
-                        isAllowed = true; // PPIC boleh di tahap akhir
+                        isAllowed = true; // PPIC diizinkan di tahap akhir
                     }
                     
                     if (index >= currentStageIndex && isAllowed) {
@@ -187,8 +181,6 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
         }
     }
     
-    // ... (Logika ngForm dan loginForm tetap sama) ...
-
     ngForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const orderId = this.dataset.orderId;
@@ -295,7 +287,7 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
     document.addEventListener('DOMContentLoaded', initializeOrderForm);
 
 } else if (window.location.pathname.endsWith('input_shipping.html')) {
-    // Logika halaman input rencana pengiriman (BARU)
+    // Logika halaman input rencana pengiriman
     async function initializeShippingForm() {
         await loadGoogleAPI();
         if (localStorage.getItem('userRole') !== 'PPIC') {
@@ -366,6 +358,7 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
         const ctx = document.getElementById('stockChart').getContext('2d');
         const labels = ['Stok Barang Jadi'];
         const data = [productionOrders.filter(o => o.status === '出荷済').length];
+        
         if (window.myStockChart) window.myStockChart.destroy();
         window.myStockChart = new Chart(ctx, {
             type: 'bar',
@@ -389,6 +382,7 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
             acc[customer] = (acc[customer] || 0) + 1;
             return acc;
         }, {});
+        
         if (window.myShippingChart) window.myShippingChart.destroy();
         window.myShippingChart = new Chart(ctx, {
             type: 'pie',
@@ -411,6 +405,7 @@ if (window.location.pathname.endsWith('index.html') || window.location.pathname 
             acc[reason] = (acc[reason] || 0) + 1;
             return acc;
         }, {});
+        
         if (window.myNGChart) window.myNGChart.destroy();
         window.myNGChart = new Chart(ctx, {
             type: 'bar',
