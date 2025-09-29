@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>生産現品票</title>
+  <?!= include('Stylesheet'); ?>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+</head>
+<body class="p">
+  <div class="card">
+    <div class="flex gap">
+      <input id="ticket-id" placeholder="オーダーID (例: PROD-...)" style="flex:1">
+      <button class="btn" onclick="loadTicket()">読み込む</button>
+      <button class="btn-outline" onclick="window.print()">印刷</button>
+    </div>
+    <div id="ticket-view" class="mt"></div>
+  </div>
+
+  <?!= include('App'); ?>
+  <script>
+  function loadTicket(){
+    const id = document.getElementById('ticket-id').value.trim();
+    if (!id) return;
+    google.script.run
+      .withSuccessHandler(order=>{
+        if (!order.success){ document.getElementById('ticket-view').innerHTML='<div class="muted">オーダーが見つかりません。</div>'; return; }
+        google.script.run.withSuccessHandler(history=>{
+          renderTicket(order, history);
+        }).getOrderHistory(id);
+      })
+      .apiGetOrder(id);
+  }
+  </script>
+</body>
+</html>
