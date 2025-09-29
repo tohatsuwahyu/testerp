@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>生産管理 | 出荷予定</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/styles.css">
+</head>
+<body class="bg-surface text-ink">
+  <header id="app-header"></header>
+  <main class="p-4 space-y-4">
+    <section class="card p-4">
+      <div class="flex flex-col md:flex-row md:items-end gap-3">
+        <div>
+          <div class="label mb-1">出荷予定日</div>
+          <input type="date" id="delivery-date-filter" class="input">
+        </div>
+        <div class="flex gap-2">
+          <button class="btn" onclick="loadDeliveryData()">日付で絞り込み</button>
+          <button class="btn-outline" onclick="printDeliveryList()">🖨️ 選択したリストを印刷</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto mt-4">
+        <table class="w-full">
+          <thead class="thead"><tr><th><input type="checkbox" onchange="toggleAllCheckboxes(this)"></th><th>得意先</th><th>製番号</th><th>品名</th><th>品番</th></tr></thead>
+          <tbody id="deliveryTableBody" class="divide-y"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+  <script src="assets/app.js"></script>
+  <script>bootstrapPage('delivery');</script>
+</body></html>
