@@ -1,0 +1,55 @@
+/* Base palette (light/dark via class .dark on <html> or body) */
+:root{
+  --brand:#6A67F3;
+  --surface:#F8F9FA;
+  --card:#FFFFFF;
+  --ink:#1F2937;
+  --muted:#6B7280;
+  --border:#E5E7EB;
+  --shadow:0 6px 14px rgba(0,0,0,.06);
+}
+:root.dark{
+  --surface:#0B0D12;
+  --card:#11151C;
+  --ink:#E5E7EB;
+  --muted:#98A2B3;
+  --border:#1F2937;
+  --shadow:0 8px 18px rgba(0,0,0,.45);
+}
+
+html,body{height:100%}
+body{background:var(--surface); color:var(--ink);}
+
+/* Components */
+.card{background:var(--card); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow);}
+.input{border:1px solid var(--border); border-radius:10px; padding:.6rem .8rem; background:transparent; width:100%}
+.btn{background:var(--brand); color:#fff; border-radius:10px; padding:.6rem 1rem; font-weight:600}
+.btn:hover{filter:brightness(.95)}
+.btn-outline{border:1px solid var(--border); border-radius:10px; padding:.55rem .9rem}
+.btn-outline:hover{background:rgba(106,103,243,.08)}
+.label{font-size:.875rem; color:var(--muted)}
+.stat{font-size:3rem; font-weight:800}
+.kpi{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1rem; text-align:center}
+.kpi-title{color:var(--muted); font-size:.85rem}
+.kpi-value{font-size:2rem; font-weight:800; color:#4F46E5}
+
+/* Tables */
+.thead th{ text-transform:uppercase; letter-spacing:.04em; font-size:.7rem; color:var(--muted); padding:.6rem .8rem; }
+tbody td{ padding:.7rem .8rem; }
+
+/* Modal (filled dynamically) */
+.modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:1rem; z-index:50; }
+.modal.show{ display:flex; }
+.modal .panel{ background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); width:100%; max-width:640px; padding:1rem; }
+
+/* Dark mode auto based on system */
+@media (prefers-color-scheme: dark) {
+  :root:not(.force-light){ color-scheme: dark; }
+}
+
+/* Print tweaks (tickets) */
+@media print{
+  .btn,.btn-outline,.input,.modal,.no-print{ display:none !important; }
+  body{ background:#fff; }
+  .card{ box-shadow:none; border:0 }
+}
