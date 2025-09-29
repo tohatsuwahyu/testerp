@@ -1,32 +1,41 @@
-<!DOCTYPE html><html lang="ja">
+<!doctype html>
+<html>
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>生産管理 | 出荷予定</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="assets/styles.css">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>出荷予定</title>
+  <link rel="stylesheet" href="./assets/styles.css"/>
 </head>
-<body class="bg-surface text-ink">
-  <header id="app-header"></header>
-  <main class="p-4 space-y-4">
-    <section class="card p-4">
-      <div class="flex flex-col md:flex-row md:items-end gap-3">
-        <div>
-          <div class="label mb-1">出荷予定日</div>
-          <input type="date" id="delivery-date-filter" class="input">
-        </div>
-        <div class="flex gap-2">
-          <button class="btn" onclick="loadDeliveryData()">日付で絞り込み</button>
-          <button class="btn-outline" onclick="printDeliveryList()">🖨️ 選択したリストを印刷</button>
-        </div>
-      </div>
-      <div class="overflow-x-auto mt-4">
-        <table class="w-full">
-          <thead class="thead"><tr><th><input type="checkbox" onchange="toggleAllCheckboxes(this)"></th><th>得意先</th><th>製番号</th><th>品名</th><th>品番</th></tr></thead>
-          <tbody id="deliveryTableBody" class="divide-y"></tbody>
-        </table>
-      </div>
-    </section>
-  </main>
-  <script src="assets/app.js"></script>
-  <script>bootstrapPage('delivery');</script>
-</body></html>
+<body data-page="delivery">
+<header>
+  <div class="logo"><a href="./dashboard.html">生産管理</a></div>
+  <nav class="no-print">
+    <a href="./dashboard.html">ダッシュボード</a>
+    <a href="./charts.html">チャート</a>
+    <a href="./delivery.html" class="active">出荷予定</a>
+  </nav>
+  <div class="flex no-print">
+    <span id="who"></span>
+    <label class="switch"><input type="checkbox" id="dark"> Dark</label>
+    <button id="logout" class="btn secondary">Logout</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card no-print flex">
+    <label>出荷予定日:</label>
+    <input type="date" id="date" class="input" style="max-width:220px">
+    <button class="btn" onclick="loadDelivery()">読み込み</button>
+  </div>
+
+  <div class="card">
+    <table class="table">
+      <thead><tr><th></th><th>得意先</th><th>製番号</th><th>品名</th><th>品番</th></tr></thead>
+      <tbody id="del-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<script src="./assets/app.js"></script>
+</body>
+</html>
