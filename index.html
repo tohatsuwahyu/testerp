@@ -1,94 +1,152 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERP</title>
-    <link rel="stylesheet" href="css/styles.css">
+  <base target="_top">
+  <?!= include('Stylesheet'); ?>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator/qrcode.js"></script>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 </head>
 <body>
-    <div class="header">
-        <div class="logo">
-            <img src="images/tsh.png" alt="Logo Perusahaan">
-            <h1>製造工程</h1>
-        </div>
-        <div class="nav-menu">
-            <a href="order_form.html" class="nav-button">生産現品票入力</a>
-            <a href="input_shipping.html" class="nav-button">出荷確認書入力</a>
-            <a href="shipping_plan.html" class="nav-button">出荷予定表</a>
-            <a href="charts.html" class="nav-button">チャート</a>
-            <span style="margin-left: 20px;">Sugeng Rawuh, <strong id="userName">User</strong> (<span id="userRole"></span>)</span>
-        </div>
+  <div id="login-container" class="container">
+    <div class="login-box">
+      <img src="https://i.ibb.co/L1L150F/company-logo-placeholder.png" alt="Company Logo" class="logo">
+      <h2>生産管理システム</h2>
+      <input type="text" id="username" placeholder="ユーザー名">
+      <input type="password" id="password" placeholder="パスワード">
+      <button onclick="handleLogin()">ログイン</button>
+      <p id="login-error" class="error-message"></p>
     </div>
+  </div>
 
-    <div class="container">
-        <div class="stock-info">完成品在庫: <span id="stockCount">0</span> Unit</div>
-        <div class="card">
-            <h2>製造工程ステータス</h2>
-            <table id="productionTable">
-                <thead>
-                    <tr>
-                        <th>製造番号</th>
-                        <th>得意先</th>
-                        <th>品名</th>
-                        <th>ステータス</th>
-                        <th>アクション</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    </tbody>
-            </table>
+  <div id="app-container" class="hidden">
+    <header>
+      <div class="header-left">
+        <img src="https://i.ibb.co/L1L150F/company-logo-placeholder.png" alt="Company Logo" class="logo-header">
+        <h1>生産管理</h1>
+        <div class="header-actions">
+          <button id="new-plan-btn" onclick="openNewOrderModal()">+ 新規計画</button>
         </div>
-    </div>
+      </div>
+      <nav class="main-nav">
+        <button id="nav-dashboard" class="nav-btn active" onclick="navigateTo('dashboard-page')">ダッシュボード</button>
+        <button id="nav-stock" class="nav-btn" onclick="navigateTo('stock-page')">在庫一覧</button>
+        <button id="nav-delivery" class="nav-btn" onclick="navigateTo('delivery-page')">出荷計画</button>
+      </nav>
+      <div class="header-right">
+        <span id="user-info"></span>
+        <button class="logout-btn" onclick="handleLogout()">ログアウト</button>
+      </div>
+    </header>
 
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <h2>Login</h2>
-            <form id="loginForm">
-                <div class="form-group">
-                    <label for="loginEmail">Email</label>
-                    <input type="email" id="loginEmail" required>
-                </div>
-                <div class="form-group">
-                    <label for="loginPassword">Kata Sandi</label>
-                    <input type="password" id="loginPassword" required>
-                </div>
-                <button type="submit">確定</button>
-            </form>
+    <main>
+      <div id="dashboard-page" class="page-content">
+        <div class="table-container">
+          <h3>現在の生産状況</h3>
+          <div class="search-container">
+            <input type="text" id="searchInput" onkeyup="filterTableOnEnter(event)" placeholder="ID等を入力しEnterキーを押してください...">
+            <button class="secondary-btn" onclick="filterTable()">🔍 検索</button>
+            <button class="secondary-btn" onclick="openScannerForSearch()">📷 QR検索</button>
+          </div>
+          <table id="productionTable">
+            <thead>
+              <tr>
+                <th>得意先</th><th>製番号</th><th>品名</th><th>数量</th>
+                <th>生産開始日</th><th>ステータス</th><th>最終更新</th>
+                <th>アクション</th><th>書類印刷</th>
+              </tr>
+            </thead>
+            <tbody id="productionTableBody"></tbody>
+          </table>
         </div>
-    </div>
 
-    <div id="ngModal" class="modal">
-        <div class="modal-content">
-            <span class="close-button">&times;</span>
-            <h2>不具合品 - 処置</h2>
-            <form id="ngForm">
-                <div class="form-group">
-                    <label for="ngReason">不具合品理由</label>
-                    <textarea id="ngReason" required></textarea>
-                </div>
-                <div class="form-group">
-                    <label>不具合品の処置</label>
-                    <div>
-                        <input type="radio" id="dispositionRepair" name="ngDisposition" value="修正" required>
-                        <label for="dispositionRepair">修正</label>
-                    </div>
-                    <div>
-                        <input type="radio" id="dispositionNew" name="ngDisposition" value="新品を追加投入">
-                        <label for="dispositionNew">新品を追加投入</label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="ngCorrection">修正内容</label>
-                    <textarea id="ngCorrection"></textarea>
-                </div>
-                <button type="submit">更新・保存</button>
-            </form>
+        <div class="toolbar" style="margin-top: 30px;">
+          <button class="secondary-btn" onclick="printDashboard()">🖨️ ダッシュボード印刷</button>
+          <button class="secondary-btn" onclick="exportData()">📄 CSVエクスポート</button>
         </div>
+
+        <div id="dashboard-content">
+          <div class="charts-container">
+            <div class="chart-card"><h3>完成品在庫</h3><p id="stock-display" class="stock-number">0</p></div>
+            <div class="chart-card"><h3>月別出荷数</h3><canvas id="monthlyShipmentsChart"></canvas></div>
+            <div class="chart-card"><h3>顧客別出荷数</h3><canvas id="customerShipmentsChart"></canvas></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="stock-page" class="page-content hidden">
+        <div class="toolbar"><h3>完成品在庫の概要</h3></div>
+        <div class="stock-summary-container">
+          <div class="summary-card"><h4>合計在庫数</h4><p id="stock-total">0</p></div>
+          <div class="summary-card"><h4>組立済</h4><p id="stock-rakit">0</p></div>
+          <div class="summary-card"><h4>検査済</h4><p id="stock-inspeksi">0</p></div>
+          <div class="summary-card"><h4>出荷準備</h4><p id="stock-siap-kirim">0</p></div>
+        </div>
+        <div class="table-container">
+          <h3>完成品在庫の詳細</h3>
+          <table id="stockTable">
+            <thead><tr><th>ユニークID</th><th>得意先</th><th>製番号</th><th>品名</th><th>ステータス</th></tr></thead>
+            <tbody id="stockTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div id="delivery-page" class="page-content hidden">
+        <div class="toolbar">
+          <label for="delivery-date-filter">出荷予定日:</label>
+          <input type="date" id="delivery-date-filter">
+          <button onclick="loadDeliveryData()">日付で絞り込み</button>
+          <button onclick="printDeliveryList()">🖨️ 選択したリストを印刷</button>
+        </div>
+        <div class="table-container">
+          <h3>出荷計画リスト</h3>
+          <table id="deliveryTable">
+            <thead><tr><th><input type="checkbox" onchange="toggleAllCheckboxes(this)"></th><th>得意先</th><th>製番号</th><th>品名</th><th>品番</th></tr></thead>
+            <tbody id="deliveryTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="scannerModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeScanner()">&times;</span>
+      <h2 id="scanner-title">QRコードスキャン</h2>
+      <div id="reader" style="width: 100%;"></div>
     </div>
-    
-    <script async defer src="https://apis.google.com/js/api.js"></script>
-    <script src="js/config.js"></script>
-    <script src="js/script.js"></script>
+  </div>
+
+  <div id="newOrderModal" class="modal">
+    <form id="new-order-form" class="modal-content">
+      <span class="close" onclick="closeNewOrderModal()">&times;</span>
+      <h2 id="modal-title">新規生産計画</h2>
+      <input type="hidden" id="edit-mode-id">
+      <label for="customer">得意先:</label><select id="customer"></select>
+      <label for="drawNo">図番:</label><select id="drawNo"></select>
+      <label for="prodName">品名:</label><select id="prodName"></select>
+      <label for="prodNo">製番号:</label><input type="text" id="prodNo">
+      <label for="partNo">品番:</label><input type="text" id="partNo">
+      <label for="quantity">数量:</label><input type="number" id="quantity" min="1" value="1">
+      <label for="startDate">生産開始日:</label><input type="date" id="startDate">
+      <button type="button" id="modal-submit-button" onclick="submitOrder()">作成</button>
+    </form>
+  </div>
+
+  <div id="updateStatusModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeUpdateStatusModal()">&times;</span>
+      <h2 id="update-modal-title">ステータス更新</h2>
+      <input type="hidden" id="update-id">
+      <select id="status-select"></select>
+      <div id="shipping-date-container" class="hidden" style="margin-top: 15px;">
+        <label for="shipping-date">出荷予定日を選択してください:</label>
+        <input type="date" id="shipping-date">
+      </div>
+      <button onclick="submitStatusUpdate()">更新</button>
+    </div>
+  </div>
+
+  <?!= include('JavaScript'); ?>
 </body>
 </html>
