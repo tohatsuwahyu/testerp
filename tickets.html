@@ -1,43 +1,46 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>生産現品票</title>
-  <link rel="stylesheet" href="./assets/styles.css"/>
+  <meta charset="utf-8"><title>生産現品票</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="assets/styles.css">
 </head>
-<body data-page="tickets">
-<header class="no-print">
-  <div class="logo"><a href="./dashboard.html">生産管理</a></div>
-  <div class="flex"><button onclick="window.print()" class="btn">🖨️ 印刷</button></div>
-</header>
+<body onload="loadTicket()">
+  <div class="container">
+    <nav class="top">
+      <div>
+        <a href="index.html">🏠 ダッシュボード</a>
+        <a href="charts.html">📊 チャート</a>
+        <a href="delivery.html">🛒 出荷予定</a>
+        <a href="tickets.html">🧾 現品票</a>
+      </div>
+      <div>
+        <button class="btn" onclick="toggleTheme()">🌓</button>
+        <button class="btn" onclick="window.print()">🖨️ 印刷</button>
+      </div>
+    </nav>
 
-<div class="container">
-  <div class="card">
-    <h2 style="text-align:center;margin-top:0">生産現品票</h2>
-    <table class="table">
-      <tr><th>品番</th><td id="t-partno"></td><th>品名</th><td id="t-prodname"></td></tr>
-      <tr><th>製番</th><td id="t-prodno"></td><th>数量</th><td id="t-qty"></td></tr>
-      <tr><th>得意先</th><td colspan="3" id="t-cust"></td></tr>
-      <tr><th>生産開始日</th><td id="t-date"></td><th>ID</th><td id="t-id"></td></tr>
-    </table>
+    <div class="watermark" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative">
+      <h2 style="text-align:center;margin:8px 0">生産現品票</h2>
+      <table class="print-table" style="margin-top:10px">
+        <tr><th style="width:18%">品番</th><td id="t-partNo"></td><th style="width:18%">品名</th><td id="t-prodName"></td></tr>
+        <tr><th>製番</th><td id="t-prodNo"></td><th>数量</th><td id="t-qty"></td></tr>
+        <tr><th>得意先</th><td colspan="3" id="t-customer"></td></tr>
+      </table>
 
-    <h3>工程履歴</h3>
-    <table class="table">
-      <thead><tr><th>工程名</th><th>担当</th><th>日付</th><th>備考</th></tr></thead>
-      <tbody id="hist"></tbody>
-    </table>
+      <h3 style="margin-top:16px">工程履歴</h3>
+      <table class="print-table">
+        <thead><tr><th>工程名</th><th>担当</th><th>日付</th><th>備考</th></tr></thead>
+        <tbody id="hist-body"><tr><td colspan="4" style="text-align:center;color:#666">印刷後、手書き欄</td></tr></tbody>
+      </table>
 
-    <div class="flex" style="justify-content:center;margin-top:12px">
-      <div id="qrcode"></div>
+      <div id="qrcode" style="text-align:center;margin:16px 0"></div>
+
+      <div class="tiny-sign" id="tiny-sign"></div>
     </div>
-
-    <div class="watermark">CONFIDENTIAL</div>
-    <div id="sig-mini" class="sig-mini"></div>
   </div>
-</div>
 
-<script src="./assets/qrcode.min.js"></script>
-<script src="./assets/app.js"></script>
+  <script src="assets/qrcode.min.js"></script>
+  <script src="assets/app.js"></script>
 </body>
 </html>
