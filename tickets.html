@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>生産現品票</title>
+  <link rel="stylesheet" href="./assets/styles.css"/>
+</head>
+<body data-page="tickets">
+<header class="no-print">
+  <div class="logo"><a href="./dashboard.html">生産管理</a></div>
+  <div class="flex"><button onclick="window.print()" class="btn">🖨️ 印刷</button></div>
+</header>
+
+<div class="container">
+  <div class="card">
+    <h2 style="text-align:center;margin-top:0">生産現品票</h2>
+    <table class="table">
+      <tr><th>品番</th><td id="t-partno"></td><th>品名</th><td id="t-prodname"></td></tr>
+      <tr><th>製番</th><td id="t-prodno"></td><th>数量</th><td id="t-qty"></td></tr>
+      <tr><th>得意先</th><td colspan="3" id="t-cust"></td></tr>
+      <tr><th>生産開始日</th><td id="t-date"></td><th>ID</th><td id="t-id"></td></tr>
+    </table>
+
+    <h3>工程履歴</h3>
+    <table class="table">
+      <thead><tr><th>工程名</th><th>担当</th><th>日付</th><th>備考</th></tr></thead>
+      <tbody id="hist"></tbody>
+    </table>
+
+    <div class="flex" style="justify-content:center;margin-top:12px">
+      <div id="qrcode"></div>
+    </div>
+
+    <div class="watermark">CONFIDENTIAL</div>
+    <div id="sig-mini" class="sig-mini"></div>
+  </div>
+</div>
+
+<script src="./assets/qrcode.min.js"></script>
+<script src="./assets/app.js"></script>
+</body>
+</html>
