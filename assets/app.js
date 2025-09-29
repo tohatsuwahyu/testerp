@@ -1,301 +1,397 @@
-// ---------- Konfigurasi ----------
-const API_BASE = "https://script.google.com/macros/s/AKfycbwqwycLMS5k1vu51EzhpoXksdUOnkRoGsgtfpisbZfJcDHN62wMpaWS-18TVFONUTBAmg/exec"; // ← ganti
+/* ===========================
+   TSH Frontend App — app.js
+   =========================== */
 
-// ---------- Auth helpers ----------
-function saveAuth(auth){ localStorage.setItem('auth', JSON.stringify(auth)); }
-function loadAuth(){ try{ return JSON.parse(localStorage.getItem('auth')||'{}'); }catch{ return {}; } }
-function clearAuth(){ localStorage.removeItem('auth'); }
+/** ===========================
+ *  CONFIG
+ *  =========================== */
+const API_BASE = "https://script.google.com/macros/s/AKfycbwqwycLMS5k1vu51EzhpoXksdUOnkRoGsgtfpisbZfJcDHN62wMpaWS-18TVFONUTBAmg/exec"; // <-- ganti dengan WebApp URL kamu
+const REFRESH_MS = 15000; // auto refresh dashboard
 
-async function apiPost(action, payload={}){
+// Optional: ikon lucu untuk UI
+const ICONS = {
+  dashboard: "🏭",
+  charts: "📊",
+  delivery: "📦",
+  tickets: "🧾",
+  edit: "✏️",
+  delete: "🗑️",
+  update: "🛠️",
+  history: "🕘",
+  print: "🖨️",
+  export: "📄",
+  scan: "📷",
+  logout: "🚪",
+};
+
+/** ===========================
+ *  UTIL
+ *  =========================== */
+const $ = (sel, root = document) => root.querySelector(sel);
+const $all = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+const on = (idOrEl, ev, fn) => {
+  const el = typeof idOrEl === "string" ? $(idOrEl) : idOrEl;
+  if (el) el.addEventListener(ev, fn);
+};
+
+function fmtDateISO(d) {
+  if (!d) return "";
+  const dt = new Date(d);
+  const off = dt.getTimezoneOffset();
+  const loc = new Date(dt.getTime() - off * 60000);
+  return loc.toISOString().slice(0, 10);
+}
+
+/** ===========================
+ *  AUTH STORAGE
+ *  =========================== */
+function saveAuth(auth) {
+  localStorage.setItem("auth", JSON.stringify(auth));
+}
+function loadAuth() {
+  try {
+    return JSON.parse(localStorage.getItem("auth") || "{}");
+  } catch {
+    return {};
+  }
+}
+function clearAuth() {
+  localStorage.removeItem("auth");
+}
+
+/** ===========================
+ *  API WRAPPERS
+ *  =========================== */
+async function apiPost(action, payload = {}) {
   const auth = loadAuth();
   const body = { action, token: auth.token, ...payload };
-  const res  = await fetch(API_BASE, {
-    method: 'POST', headers: { 'Content-Type':'application/json' },
-    body: JSON.stringify(body)
-  });
-  const j = await res.json();
-  if (!j.ok) throw new Error(j.error||'Request failed');
+  let j;
+  try {
+    const res = await fetch(API_BASE, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    j = await res.json();
+  } catch (e) {
+    throw new Error("Tidak dapat terhubung ke API. Cek API_BASE & deployment Web App.");
+  }
+  if (!j.ok) throw new Error(j.error || "Request failed");
   return j;
 }
-async function apiGet(action, params={}){
+
+async function apiGet(action, params = {}) {
   const auth = loadAuth();
   const q = new URLSearchParams({ action, token: auth.token, ...params });
-  const res = await fetch(`${API_BASE}?${q.toString()}`);
-  const j = await res.json();
-  if (!j.ok) throw new Error(j.error||'Request failed');
+  let j;
+  try {
+    const res = await fetch(`${API_BASE}?${q.toString()}`);
+    j = await res.json();
+  } catch (e) {
+    throw new Error("Tidak dapat terhubung ke API. Cek API_BASE & deployment Web App.");
+  }
+  if (!j.ok) throw new Error(j.error || "Request failed");
   return j;
 }
 
-// ---------- UI helpers ----------
-function $(sel, root=document){ return root.querySelector(sel); }
-function $all(sel, root=document){ return [...root.querySelectorAll(sel)]; }
-function on(id, ev, fn){ const el=(typeof id==='string')?$(id):id; if(el) el.addEventListener(ev,fn); }
-
-function setRoleVisibility(role){
-  // stricter role-based buttons via data-roles="admin,生産管理部"
-  $all('[data-roles]').forEach(el=>{
-    const allowed = el.getAttribute('data-roles').split(',').map(s=>s.trim());
-    el.style.display = (role==='admin' || allowed.includes(role)) ? '' : 'none';
+/** ===========================
+ *  RBAC: sembunyikan elemen by role
+ *  data-roles="生産管理部,検査部,製造部,admin"
+ *  =========================== */
+function setRoleVisibility(role) {
+  $all("[data-roles]").forEach((el) => {
+    const allow = el
+      .getAttribute("data-roles")
+      .split(",")
+      .map((s) => s.trim());
+    el.style.display = role === "admin" || allow.includes(role) ? "" : "none";
   });
 }
 
-// ---------- Login ----------
-async function doLogin(e){
+/** ===========================
+ *  LOGIN / LOGOUT
+ *  =========================== */
+function showLogin() {
+  $("#login-card")?.classList.remove("hidden");
+  $("#app")?.classList.add("hidden");
+}
+function showApp() {
+  $("#login-card")?.classList.add("hidden");
+  $("#app")?.classList.remove("hidden");
+}
+function showError(msg) {
+  const el = $("#login-error");
+  if (!el) return alert(msg);
+  el.textContent = msg;
+  el.classList.add("shake");
+  setTimeout(() => el.classList.remove("shake"), 600);
+}
+
+async function doLogin(e) {
   e?.preventDefault?.();
-  const username = $('#username')?.value?.trim();
-  const password = $('#password')?.value?.trim();
-  if (!username || !password){ return showError('Harap isi username & password'); }
-  try{
-    const { token, user } = await apiPost('login', { username, password });
+  const username = $("#username")?.value?.trim();
+  const password = $("#password")?.value?.trim();
+  if (!username || !password) return showError("Harap isi username & password");
+  try {
+    const { token, user } = await apiPost("login", { username, password });
     saveAuth({ token, user });
-    window.location.href = 'index.html'; // kembali ke dashboard
-  }catch(err){
+    location.href = "index.html"; // kembali ke dashboard
+  } catch (err) {
     showError(err.message);
   }
 }
-function showError(msg){ const el=$('#login-error'); if(el){ el.textContent=msg; el.classList.add('shake'); setTimeout(()=>el.classList.remove('shake'),600); } }
-function logout(){ clearAuth(); window.location.href='index.html'; }
 
-// ---------- Dashboard ----------
-async function loadDashboard(){
+function logout() {
+  try {
+    clearAuth();
+  } finally {
+    location.replace("index.html");
+  }
+}
+
+/** ===========================
+ *  DASHBOARD
+ *  =========================== */
+async function loadDashboard() {
+  // Hook Enter pada login
+  on("#password", "keydown", (e) => {
+    if (e.key === "Enter") doLogin(e);
+  });
+  on("#login-form", "submit", doLogin);
+  on("#btn-logout", "click", logout);
+
   const auth = loadAuth();
-  if (!auth.token){ // belum login
-    $('#login-card').style.display = '';
-    $('#app').style.display = 'none';
-    // Enter → login
-    on('#password','keydown',e=>{ if(e.key==='Enter') doLogin(e); });
-    on('#login-form','submit',doLogin);
+  if (!auth.token) {
+    showLogin();
     return;
   }
-  $('#login-card').style.display = 'none';
-  $('#app').style.display = '';
-  $('#user-info').textContent = `${auth.user.fullName}（${auth.user.role}）`;
-  setRoleVisibility(auth.user.role);
-  await loadProductionTable();
-  await loadMasters();
-  // Live refresh 15s
-  setInterval(loadProductionTable, 15000);
+
+  try {
+    showApp();
+    $("#user-info").textContent = `${auth.user.fullName}（${auth.user.role}）`;
+    setRoleVisibility(auth.user.role);
+
+    // tombol nav
+    on("#nav-dashboard", "click", () => (location.href = "index.html"));
+    on("#nav-charts", "click", () => (location.href = "charts.html"));
+    on("#nav-delivery", "click", () => (location.href = "delivery.html"));
+    on("#nav-tickets", "click", () => (location.href = "tickets.html"));
+
+    await Promise.all([loadProductionTable(), loadMasters()]);
+    // auto refresh
+    setInterval(loadProductionTable, REFRESH_MS);
+
+    // aksi toolbar
+    on("#btn-export", "click", exportCSV);
+    on("#btn-print", "click", () => window.print());
+  } catch (err) {
+    console.warn("Load dashboard gagal:", err);
+    showError("Sesi kadaluarsa atau API gagal. Silakan login ulang.");
+    clearAuth();
+    showLogin();
+  }
 }
-async function loadProductionTable(){
-  const { rows } = await apiGet('production');
-  const body = $('#table-body');
-  body.innerHTML = '';
-  rows.forEach(r=>{
-    const [id, customer, prodNo, prodName, partNo, drawNo, startDate, status, lastUpd, shipDate, qty] = r;
-    const tr = document.createElement('tr');
+
+async function loadProductionTable() {
+  const body = $("#table-body");
+  if (!body) return;
+  body.innerHTML = `<tr><td colspan="9">Loading...</td></tr>`;
+  const { rows } = await apiGet("production");
+  body.innerHTML = "";
+  rows.forEach((r) => {
+    const [
+      id,
+      customer,
+      prodNo,
+      prodName,
+      partNo,
+      drawNo,
+      startDate,
+      status,
+      lastUpd,
+      shipDate,
+      qty,
+    ] = r;
+    const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${customer}</td>
       <td>${prodNo}</td>
       <td>${prodName}</td>
       <td class="right">${qty}</td>
-      <td>${startDate||''}</td>
+      <td>${startDate || ""}</td>
       <td><span class="badge">${status}</span></td>
-      <td>${lastUpd||''}</td>
+      <td>${lastUpd || ""}</td>
       <td class="actions">
-        <button class="btn" data-roles="生産管理部,admin" onclick="openStatus('${id}','${prodNo}')">🛠️</button>
-        <button class="btn" data-roles="admin" onclick="openEdit('${id}')">✏️</button>
-        <button class="btn danger" data-roles="admin" onclick="removeOrder('${id}')">🗑️</button>
-        <a class="btn" href="tickets.html?id=${encodeURIComponent(id)}">🧾</a>
-      </td>`;
+        <button class="btn" title="Update" data-roles="生産管理部,検査部,製造部,admin" onclick="openStatus('${id}','${prodNo}')">${ICONS.update}</button>
+        <button class="btn" title="Edit" data-roles="admin" onclick="openEdit('${id}')">${ICONS.edit}</button>
+        <button class="btn danger" title="Hapus" data-roles="admin" onclick="removeOrder('${id}')">${ICONS.delete}</button>
+        <a class="btn" title="現品票" href="tickets.html?id=${encodeURIComponent(id)}">${ICONS.tickets}</a>
+      </td>
+    `;
     body.appendChild(tr);
   });
-  const role = loadAuth().user.role;
+  const role = loadAuth()?.user?.role;
   setRoleVisibility(role);
 }
-async function loadMasters(){
-  const { customers, drawings, products } = await apiGet('masters');
-  fillSelect('#customer', customers, '得意先');
-  fillSelect('#drawNo', drawings, '図番');
-  fillSelect('#prodName', products, '品名');
-}
-function fillSelect(sel, arr, ph){
-  const el = $(sel); el.innerHTML = `<option value="" disabled selected>${ph}</option>`;
-  arr.forEach(v=>{ const o=document.createElement('option'); o.value=v; o.textContent=v; el.appendChild(o); });
+
+async function loadMasters() {
+  // contoh memuat master untuk dropdown modal
+  const el = $("#customer-select");
+  if (!el) return;
+  const { customers, drawingNumbers, productNames } = await apiGet("masters");
+  el.innerHTML = customers.map((c) => `<option>${c}</option>`).join("");
+  $("#drawno-select").innerHTML = drawingNumbers.map((c) => `<option>${c}</option>`).join("");
+  $("#prodname-select").innerHTML = productNames.map((c) => `<option>${c}</option>`).join("");
 }
 
-// Create/Update/Delete
-async function submitOrder(){
-  const d = {
-    customer: $('#customer').value, drawNo: $('#drawNo').value, prodName: $('#prodName').value,
-    prodNo: $('#prodNo').value, partNo: $('#partNo').value,
-    quantity: Number($('#quantity').value||1), startDate: $('#startDate').value
-  };
-  if (!d.customer || !d.prodNo || !d.startDate || !d.quantity) return alert('必須項目を入力してください');
-  const editId = $('#editId').value;
-  if (editId){
-    await apiPost('updateOrder',{ data: { ...d, id: editId } });
-    alert('更新しました'); closeModal('#orderModal');
-  }else{
-    const r = await apiPost('createOrder',{ data: d });
-    alert('作成しました'); closeModal('#orderModal');
-    if (confirm('現品票を印刷しますか？')) window.open(`tickets.html?id=${encodeURIComponent(r.id)}`,'_blank');
+async function exportCSV() {
+  const { rows } = await apiGet("production");
+  let csv = "ID,得意先,製番号,品名,品番,図番,生産開始日,ステータス,最終更新,出荷予定日,数量\n";
+  rows.forEach((r) => {
+    csv += r
+      .map((x) => `"${(x ?? "").toString().replace(/"/g, '""')}"`)
+      .join(",") + "\r\n";
+  });
+  const uri = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
+  const a = document.createElement("a");
+  a.href = uri;
+  a.download = "data_produksi.csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+/** ===========================
+ *  CHARTS PAGE
+ *  =========================== */
+async function loadChartsPage() {
+  const auth = loadAuth();
+  if (!auth.token) return (location.href = "index.html");
+  $("#who").textContent = `${auth.user.fullName}（${auth.user.role}）`;
+  on("#btn-logout", "click", logout);
+
+  const { stock, monthly, customer } = await apiGet("charts");
+  $("#stock-display").textContent = stock;
+
+  // chart.js instances (pastikan <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> di HTML)
+  const monthlyCtx = $("#monthlyShipmentsChart").getContext("2d");
+  new Chart(monthlyCtx, {
+    type: "bar",
+    data: {
+      labels: Object.keys(monthly),
+      datasets: [{ label: "月別出荷数", data: Object.values(monthly) }],
+    },
+    options: { scales: { y: { beginAtZero: true } } },
+  });
+
+  const customerCtx = $("#customerShipmentsChart").getContext("2d");
+  new Chart(customerCtx, {
+    type: "pie",
+    data: {
+      labels: Object.keys(customer),
+      datasets: [{ data: Object.values(customer) }],
+    },
+  });
+}
+
+/** ===========================
+ *  DELIVERY PAGE
+ *  =========================== */
+async function loadDeliveryPage() {
+  const auth = loadAuth();
+  if (!auth.token) return (location.href = "index.html");
+  $("#who").textContent = `${auth.user.fullName}（${auth.user.role}）`;
+  on("#btn-logout", "click", logout);
+
+  const dateInput = $("#delivery-date");
+  if (!dateInput.value) dateInput.value = fmtDateISO(new Date());
+
+  async function refresh() {
+    const { rows } = await apiGet("delivery", { date: dateInput.value });
+    const body = $("#delivery-body");
+    body.innerHTML = "";
+    rows.forEach((row) => {
+      const tr = document.createElement("tr");
+      tr.dataset.customer = row[1];
+      tr.dataset.prodNo = row[2];
+      tr.dataset.prodName = row[3];
+      tr.dataset.partNo = row[4];
+      tr.innerHTML = `
+        <td><input type="checkbox" class="pick"></td>
+        <td>${row[1]}</td>
+        <td>${row[2]}</td>
+        <td>${row[3]}</td>
+        <td>${row[4]}</td>
+      `;
+      body.appendChild(tr);
+    });
   }
-  await loadProductionTable();
-}
-async function removeOrder(id){
-  if (!confirm('削除しますか？')) return;
-  await apiPost('deleteOrder',{ id });
-  await loadProductionTable();
-}
-function openEdit(id){
-  apiGet('order',{ id }).then(({order})=>{
-    $('#modal-title').textContent='生産計画の編集';
-    $('#editId').value = order.id;
-    $('#customer').value = order.customer;
-    $('#drawNo').value   = order.drawNo;
-    $('#prodName').value = order.prodName;
-    $('#prodNo').value   = order.prodNo;
-    $('#partNo').value   = order.partNo;
-    $('#quantity').value = order.quantity;
-    $('#startDate').value= order.startDate;
-    openModal('#orderModal');
+
+  on("#btn-filter", "click", refresh);
+  on("#btn-print-list", "click", () => {
+    const picked = [];
+    $all(".pick:checked").forEach((cb) => picked.push(cb.closest("tr").dataset));
+    if (!picked.length) return alert("Pilih minimal satu item.");
+    const win = window.open("", "_blank");
+    const rows = picked
+      .map(
+        (x) =>
+          `<tr><td>${x.prodNo}</td><td>${x.customer}</td><td>${x.partNo}</td><td>${x.prodName}</td><td>1</td><td></td></tr>`
+      )
+      .join("");
+    win.document.write(`
+      <html><head><title>出荷予定リスト</title>
+      <style>
+        body{font-family:sans-serif;width:190mm}
+        h1,h3{text-align:center}
+        table{width:100%;border-collapse:collapse;border:1px solid #000}
+        th,td{border:1px solid #000;padding:8px;text-align:center}
+        th{background:#f2f2f2}
+        .wm::after{content:'TSH';position:fixed;inset:0;color:#0003;font-size:120px;transform:rotate(-30deg);display:flex;justify-content:center;align-items:center;pointer-events:none}
+      </style></head>
+      <body class="wm">
+        <h1>出荷予定リスト</h1>
+        <h3>出荷日: ${dateInput.value}</h3>
+        <table><thead>
+        <tr><th>管理番号</th><th>得意先</th><th>品番</th><th>品名</th><th>数量</th><th>備考</th></tr>
+        </thead><tbody>${rows}</tbody></table>
+        <script>window.onload=function(){window.print();window.close();}</script>
+      </body></html>
+    `);
+    win.document.close();
   });
-}
-function openNew(){
-  $('#modal-title').textContent='新規生産計画';
-  $('#editId').value=''; $('#orderForm').reset(); openModal('#orderModal');
+
+  refresh();
 }
 
-// Status update
-let updateId=null;
-function openStatus(id, prodNo){
-  updateId=id;
-  $('#status-title').innerHTML = `ステータス更新 <small>${prodNo}</small>`;
-  const role = loadAuth().user.role;
-  const ALL = {
-    '生産管理部':['出荷準備','出荷済'],
-    '製造部':['材料準備','レーザ工程','曲げ工程','外枠組立工程','シャッター組立工程','シャッター溶接工程','コーキング工程','外枠塗装工程','組立工程（組立中）','組立工程（組立済）','外注'],
-    '検査部':['検査工程','検査済','検査保留'],
-    'admin':['材料準備','レーザ工程','曲げ工程','外枠組立工程','シャッター組立工程','シャッター溶接工程','コーキング工程','外枠塗装工程','組立工程（組立中）','組立工程（組立済）','外注','検査工程','検査済','検査保留','出荷準備','出荷済']
-  };
-  const allowed = role==='admin' ? ALL.admin : (ALL[role]||[]);
-  const sel = $('#status-select'); sel.innerHTML='';
-  allowed.forEach(s=>{ const o=document.createElement('option'); o.value=s; o.textContent=s; sel.appendChild(o); });
-  $('#shipDateWrap').style.display='none';
-  sel.onchange = ()=>{ $('#shipDateWrap').style.display = (sel.value==='出荷準備') ? '' : 'none'; };
-  openModal('#statusModal');
-}
-async function submitStatus(){
-  const newStatus = $('#status-select').value;
-  let shippingDate = null;
-  if (newStatus==='出荷準備'){
-    shippingDate = $('#shipDate').value;
-    if (!shippingDate) return alert('出荷予定日を入力してください');
+/** ===========================
+ *  TICKETS PAGE (現品票)
+ *  =========================== */
+async function loadTicketsPage() {
+  const auth = loadAuth();
+  if (!auth.token) return (location.href = "index.html");
+  $("#who").textContent = `${auth.user.fullName}（${auth.user.role}）`;
+  on("#btn-logout", "click", logout);
+
+  const url = new URL(location.href);
+  const id = url.searchParams.get("id");
+  if (!id) {
+    $("#ticket").innerHTML = "<p>選択されたIDがありません。</p>";
+    return;
   }
-  await apiPost('updateStatus',{ id:updateId, newStatus, shippingDate });
-  closeModal('#statusModal');
-  await loadProductionTable();
-}
+  const { order, history } = await apiGet("ticket", { id });
 
-// ---------- Charts page ----------
-async function loadCharts(){
-  const { stock, monthly, customer } = await apiGet('charts');
-  $('#stock-number').textContent = stock;
-  drawBar('#chart-monthly', Object.keys(monthly), Object.values(monthly));
-  drawPie('#chart-customer', Object.keys(customer), Object.values(customer));
-}
-function drawBar(canvasSel, labels, data){
-  const ctx = $(canvasSel).getContext('2d');
-  // Chart.js via CDN:
-  // new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'月別出荷数',data}]},options:{scales:{y:{beginAtZero:true}}}});
-  // demi contoh tanpa Chart.js → render simple
-  ctx.clearRect(0,0,800,300);
-  const max = Math.max(1, ...data);
-  const w = ctx.canvas.width, h=ctx.canvas.height, pad=30;
-  data.forEach((v,i)=>{
-    const x = pad + i*((w-pad*2)/data.length);
-    const bh = (h-pad*2) * (v/max);
-    ctx.fillRect(x, h-pad-bh, 20, bh);
-  });
-}
-function drawPie(canvasSel, labels, values){
-  const ctx = $(canvasSel).getContext('2d');
-  const total = Math.max(1, values.reduce((a,b)=>a+b,0));
-  let start=0;
-  const cx=150, cy=120, r=100;
-  ctx.clearRect(0,0,300,240);
-  values.forEach(v=>{
-    const ang = (v/total)*Math.PI*2;
-    ctx.beginPath(); ctx.moveTo(cx,cy);
-    ctx.arc(cx,cy,r,start,start+ang); ctx.closePath(); ctx.fill(); start+=ang;
-  });
-}
+  // render detail
+  $("#t-customer").textContent = order.customer;
+  $("#t-prodNo").textContent = order.prodNo;
+  $("#t-prodName").textContent = order.prodName;
+  $("#t-partNo").textContent = order.partNo;
+  $("#t-qty").textContent = order.quantity;
+  $("#t-start").textContent = order.startDate || "";
 
-// ---------- Delivery page ----------
-async function loadDelivery(){
-  const d = $('#delivery-date').value || new Date().toISOString().slice(0,10);
-  const { rows } = await apiGet('delivery',{ date:d });
-  const body = $('#delivery-body'); body.innerHTML='';
-  rows.forEach(r=>{
-    const [id,customer,prodNo,prodName,partNo] = r;
-    const tr=document.createElement('tr');
-    tr.innerHTML = `<td><input type="checkbox" class="pick"></td>
-      <td>${customer}</td><td>${prodNo}</td><td>${prodName}</td><td>${partNo}</td>`;
-    body.appendChild(tr);
-  });
-}
-function printSelectedDelivery(){
-  const d  = $('#delivery-date').value;
-  const sel= $all('.pick:checked').map(cb=> cb.closest('tr'));
-  if (sel.length===0) return alert('選択してください');
-  const rows = sel.map(tr=>{
-    const tds = tr.querySelectorAll('td');
-    return `<tr><td>${tds[2].innerText}</td><td>${tds[1].innerText}</td><td>${tds[4].innerText}</td><td>${tds[3].innerText}</td><td>1</td><td></td></tr>`;
-  }).join('');
-  const w = window.open('', '_blank');
-  w.document.write(`
-    <html><head><title>出荷予定リスト</title>
-      <link rel="stylesheet" href="assets/styles.css">
-    </head><body class="print-sheet">
-      <h1>出荷予定リスト</h1>
-      <h3>出荷日: ${d}</h3>
-      <table class="print-table">
-        <thead><tr><th>管理番号</th><th>得意先</th><th>品番</th><th>品名</th><th>数量</th><th>備考</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <script>window.onload=()=>{window.print();window.close();}</script>
-    </body></html>`);
-  w.document.close();
-}
-
-// ---------- Tickets page (現品票 + QR + watermark/sign) ----------
-async function loadTicket(){
-  const id = new URLSearchParams(location.search).get('id');
-  if (!id) return;
-  const { order } = await apiGet('order',{ id });
-  $('#t-prodNo').textContent  = order.prodNo;
-  $('#t-partNo').textContent  = order.partNo;
-  $('#t-prodName').textContent= order.prodName;
-  $('#t-qty').textContent     = order.quantity;
-  $('#t-customer').textContent= order.customer;
-
-  // vCard/JSON lengkap untuk QR
+  // QR payload: JSON lengkap
   const payload = {
-    id: order.id, customer: order.customer, prodNo: order.prodNo,
-    prodName: order.prodName, partNo: order.partNo, qty: order.quantity
-  };
-  const qr = qrcode(4,'L'); // from qrcode-generator
-  qr.addData(JSON.stringify(payload)); qr.make();
-  $('#qrcode').innerHTML = qr.createImgTag(4,8);
-
-  // Digital signature kecil di pojok (HMAC dari id)
-  const sig = await hmacSmall(order.id);
-  $('#tiny-sign').textContent = sig.slice(0,10);
-}
-async function hmacSmall(text){
-  // client-side demo: bukan rahasia. Verifikasi tetap di server bila perlu.
-  // (Opsional) cukup tampilkan checksum kecil untuk jejak digital.
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw', enc.encode('public-nonsecret'), {name:'HMAC', hash:'SHA-256'}, false, ['sign']
-  );
-  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(text));
-  return btoa(String.fromCharCode(...new Uint8Array(sig)));
-}
-
-// ---------- Modals ----------
-function openModal(sel){ $(sel).classList.add('open'); }
-function closeModal(sel){ $(sel).classList.remove('open'); }
-
-// ---------- Theme ----------
-function toggleTheme(){ document.documentElement.classList.toggle('dark'); }
+    id: order.id,
+    customer: order.customer,
+    prodNo: order.prodNo,
+   
