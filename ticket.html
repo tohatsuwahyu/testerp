@@ -1,0 +1,55 @@
+<!DOCTYPE html><html lang="ja">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>生産管理 | 生産現品票</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="assets/styles.css">
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body class="bg-surface text-ink">
+  <header id="app-header"></header>
+  <main class="p-4 space-y-4">
+    <section class="card p-4">
+      <div class="flex flex-col md:flex-row md:items-end gap-2">
+        <div class="grow">
+          <div class="label mb-1">オーダーID</div>
+          <input id="ticket-id-input" class="input" placeholder="例: PROD-...">
+        </div>
+        <div class="flex gap-2">
+          <button class="btn" onclick="loadTicket()">読み込み</button>
+          <button class="btn-outline" onclick="openScannerForTicket()">📷 スキャン</button>
+          <button class="btn-outline" onclick="printTicket()">🖨️ 印刷</button>
+        </div>
+      </div>
+      <div id="ticket-view" class="mt-4">
+        <!-- Ticket content will be rendered here -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Scanner Modal -->
+  <div id="scannerModal" class="modal"></div>
+
+  <script src="assets/app.js"></script>
+  <script>
+    bootstrapPage('tickets');
+    async function loadTicket(){
+      const id = document.getElementById('ticket-id-input').value.trim();
+      if (!id) return alert('オーダーIDを入力してください。');
+      const res = await apiGetOrderAndHistory(id);
+      renderTicket(res);
+    }
+    function openScannerForTicket(){
+      isScanForSearch = true;
+      scannerOpen(async (text)=>{
+        document.getElementById('ticket-id-input').value = text;
+        await loadTicket();
+      });
+    }
+    function printTicket(){
+      const node = document.getElementById('ticket-view');
+      if (!node.innerHTML.trim()) return alert('先にオーダーを読み込んでください。');
+      window.print();
+    }
+  </script>
+</body></html>
