@@ -1,55 +1,37 @@
-/* Base palette (light/dark via class .dark on <html> or body) */
 :root{
-  --brand:#6A67F3;
-  --surface:#F8F9FA;
-  --card:#FFFFFF;
-  --ink:#1F2937;
-  --muted:#6B7280;
-  --border:#E5E7EB;
-  --shadow:0 6px 14px rgba(0,0,0,.06);
+  --bg:#f7f8fb; --card:#fff; --text:#1f2937; --muted:#6b7280;
+  --primary:#6A67F3; --primary-2:#5653C6; --danger:#ef4444; --ok:#10b981;
 }
-:root.dark{
-  --surface:#0B0D12;
-  --card:#11151C;
-  --ink:#E5E7EB;
-  --muted:#98A2B3;
-  --border:#1F2937;
-  --shadow:0 8px 18px rgba(0,0,0,.45);
-}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text)}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:var(--card);border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:10}
+.logo{display:flex;gap:10px;align-items:center}
+nav a{margin-right:8px;padding:8px 12px;border-radius:8px;text-decoration:none;color:var(--text)}
+nav a.active, nav a:hover{background:var(--primary);color:#fff}
+.container{max-width:1100px;margin:24px auto;padding:0 16px}
+.card{background:var(--card);border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.04);padding:18px}
+.btn{background:var(--primary);color:#fff;border:none;border-radius:10px;padding:10px 14px;cursor:pointer}
+.btn.secondary{background:#e5e7eb;color:#111827}
+.btn.danger{background:var(--danger)}
+.input, select{width:100%;padding:10px;border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb}
+.flex{display:flex;gap:12px;align-items:center}
+.grid{display:grid;gap:16px}
+.grid-3{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border-bottom:1px solid #e5e7eb;padding:12px;text-align:left;white-space:nowrap}
+.badge{padding:4px 8px;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:600}
+.hidden{display:none}
 
-html,body{height:100%}
-body{background:var(--surface); color:var(--ink);}
+.dark{--bg:#0b1020;--card:#0f1528;--text:#e5e7eb;--muted:#a3a3a3;--primary:#8a86ff;--primary-2:#6b67ff;border-color:#1f2a44}
+.dark header{border-color:#1f2a44}
+.dark .card{border-color:#1f2a44}
+.switch{cursor:pointer}
 
-/* Components */
-.card{background:var(--card); border:1px solid var(--border); border-radius:14px; box-shadow:var(--shadow);}
-.input{border:1px solid var(--border); border-radius:10px; padding:.6rem .8rem; background:transparent; width:100%}
-.btn{background:var(--brand); color:#fff; border-radius:10px; padding:.6rem 1rem; font-weight:600}
-.btn:hover{filter:brightness(.95)}
-.btn-outline{border:1px solid var(--border); border-radius:10px; padding:.55rem .9rem}
-.btn-outline:hover{background:rgba(106,103,243,.08)}
-.label{font-size:.875rem; color:var(--muted)}
-.stat{font-size:3rem; font-weight:800}
-.kpi{background:var(--card); border:1px solid var(--border); border-radius:12px; padding:1rem; text-align:center}
-.kpi-title{color:var(--muted); font-size:.85rem}
-.kpi-value{font-size:2rem; font-weight:800; color:#4F46E5}
-
-/* Tables */
-.thead th{ text-transform:uppercase; letter-spacing:.04em; font-size:.7rem; color:var(--muted); padding:.6rem .8rem; }
-tbody td{ padding:.7rem .8rem; }
-
-/* Modal (filled dynamically) */
-.modal{ position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(0,0,0,.45); padding:1rem; z-index:50; }
-.modal.show{ display:flex; }
-.modal .panel{ background:var(--card); border:1px solid var(--border); border-radius:12px; box-shadow:var(--shadow); width:100%; max-width:640px; padding:1rem; }
-
-/* Dark mode auto based on system */
-@media (prefers-color-scheme: dark) {
-  :root:not(.force-light){ color-scheme: dark; }
-}
-
-/* Print tweaks (tickets) */
 @media print{
-  .btn,.btn-outline,.input,.modal,.no-print{ display:none !important; }
-  body{ background:#fff; }
-  .card{ box-shadow:none; border:0 }
+  header, nav, .no-print{display:none!important}
+  body{background:#fff}
+  .watermark{
+    position:fixed;top:40%;left:10%;right:10%;text-align:center;
+    font-size:60px;color:rgba(0,0,0,.08);transform:rotate(-20deg);
+  }
+  .sig-mini{position:fixed;bottom:8mm;right:10mm;font-size:10px;color:#6b7280}
 }
