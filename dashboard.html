@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>生産管理 | ダッシュボード</title>
+  <link rel="stylesheet" href="./assets/styles.css"/>
+</head>
+<body data-page="dashboard">
+<header>
+  <div class="logo"><a href="./dashboard.html" class="nav active">生産管理</a></div>
+  <nav class="no-print">
+    <a href="./dashboard.html" class="active">ダッシュボード</a>
+    <a href="./charts.html">チャート</a>
+    <a href="./delivery.html">出荷予定</a>
+  </nav>
+  <div class="flex no-print">
+    <span id="who" class="muted"></span>
+    <label class="switch"><input type="checkbox" id="dark"> Dark</label>
+    <button id="logout" class="btn secondary">Logout</button>
+  </div>
+</header>
+
+<div class="container">
+  <div class="card no-print">
+    <button id="create" class="btn btn-create">+ 新規計画</button>
+  </div>
+
+  <div class="card">
+    <h3 style="margin-top:0">現在の生産状況</h3>
+    <div style="overflow:auto">
+      <table class="table">
+        <thead><tr>
+          <th>得意先</th><th>製番号</th><th>品名</th><th>数量</th>
+          <th>生産開始日</th><th>ステータス</th><th>最終更新</th><th class="no-print">操作</th>
+        </tr></thead>
+        <tbody id="prod-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="./assets/app.js"></script>
+</body>
+</html>
