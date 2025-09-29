@@ -1,76 +1,26 @@
-<!DOCTYPE html><html lang="ja">
+<!doctype html>
+<html lang="ja">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>生産管理 | ダッシュボード</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="assets/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>生産管理 | ログイン</title>
+  <?!= include('Stylesheet'); ?>
 </head>
-<body class="bg-surface text-ink">
-  <header id="app-header"></header>
+<body class="bg">
+  <div class="login-card">
+    <h2>生産管理システム</h2>
+    <input id="username" placeholder="ユーザー名" autocomplete="username">
+    <input id="password" type="password" placeholder="パスワード" autocomplete="current-password">
+    <button id="loginBtn" type="button">ログイン</button>
+    <p id="login-error" class="error"></p>
+  </div>
 
-  <main class="p-4 space-y-6">
-    <section class="card p-4">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <h1 class="text-xl font-semibold">現在の生産状況</h1>
-        <div class="flex gap-2">
-          <input id="searchInput" class="input" placeholder="ID等を入力しEnter…" onkeyup="filterTableOnEnter(event)">
-          <button class="btn-outline" onclick="filterTable()">🔍 検索</button>
-          <button class="btn-outline" onclick="openScannerForSearch()">📷 QR検索</button>
-        </div>
-      </div>
-      <div class="overflow-x-auto mt-3">
-        <table class="w-full">
-          <thead class="thead">
-            <tr><th>得意先</th><th>製番号</th><th>品名</th><th>数量</th><th>生産開始日</th><th>ステータス</th><th>最終更新</th><th>アクション</th><th>書類印刷</th></tr>
-          </thead>
-          <tbody id="productionTableBody" class="divide-y"></tbody>
-        </table>
-      </div>
-      <div class="mt-3 flex flex-wrap gap-2">
-        <button class="btn-outline" onclick="printDashboard()">🖨️ ダッシュボード印刷</button>
-        <button class="btn-outline" onclick="exportData()">📄 CSVエクスポート</button>
-      </div>
-    </section>
-
-    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-      <div class="card p-4 text-center">
-        <div class="label">完成品在庫</div>
-        <div id="stock-display" class="stat">0</div>
-      </div>
-      <div class="card p-4">
-        <div class="label">月別出荷数</div>
-        <canvas id="monthlyShipmentsChart" height="220"></canvas>
-      </div>
-      <div class="card p-4">
-        <div class="label">顧客別出荷数</div>
-        <canvas id="customerShipmentsChart" height="220"></canvas>
-      </div>
-    </section>
-
-    <section class="card p-4">
-      <h2 class="text-lg font-semibold mb-3">完成品在庫の概要</h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div class="kpi"><div class="kpi-title">合計在庫数</div><div id="stock-total" class="kpi-value">0</div></div>
-        <div class="kpi"><div class="kpi-title">組立済</div><div id="stock-rakit" class="kpi-value">0</div></div>
-        <div class="kpi"><div class="kpi-title">検査済</div><div id="stock-inspeksi" class="kpi-value">0</div></div>
-        <div class="kpi"><div class="kpi-title">出荷準備</div><div id="stock-siap-kirim" class="kpi-value">0</div></div>
-      </div>
-      <div class="overflow-x-auto mt-4">
-        <table class="w-full">
-          <thead class="thead"><tr><th>ユニークID</th><th>得意先</th><th>製番号</th><th>品名</th><th>ステータス</th></tr></thead>
-          <tbody id="stockTableBody" class="divide-y"></tbody>
-        </table>
-      </div>
-    </section>
-  </main>
-
-  <!-- Modals -->
-  <div id="scannerModal" class="modal"></div>
-  <div id="newOrderModal" class="modal"></div>
-  <div id="updateStatusModal" class="modal"></div>
-
-  <script src="https://unpkg.com/html5-qrcode"></script>
-  <script src="assets/app.js"></script>
-  <script>bootstrapPage('dashboard');</script>
-</body></html>
+  <?!= include('App'); ?>
+  <script>
+    const onEnter = e => { if (e.key==='Enter') handleLogin(); };
+    document.getElementById('username').addEventListener('keydown', onEnter);
+    document.getElementById('password').addEventListener('keydown', onEnter);
+    document.getElementById('loginBtn').addEventListener('click', handleLogin);
+  </script>
+</body>
+</html>
