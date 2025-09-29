@@ -1,26 +1,29 @@
 <!doctype html>
-<html lang="ja">
+<html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>生産管理 | ログイン</title>
-  <?!= include('Stylesheet'); ?>
+  <link rel="stylesheet" href="./assets/styles.css"/>
 </head>
-<body class="bg">
-  <div class="login-card">
-    <h2>生産管理システム</h2>
-    <input id="username" placeholder="ユーザー名" autocomplete="username">
-    <input id="password" type="password" placeholder="パスワード" autocomplete="current-password">
-    <button id="loginBtn" type="button">ログイン</button>
-    <p id="login-error" class="error"></p>
+<body data-page="login">
+  <header>
+    <div class="logo"><strong>生産管理</strong></div>
+    <div class="flex"><label class="switch">
+      <input type="checkbox" id="dark"> Dark
+    </label></div>
+  </header>
+  <div class="container">
+    <div class="card" style="max-width:420px;margin:auto">
+      <h2 style="margin-top:0">ログイン</h2>
+      <form id="login-form" class="grid">
+        <input id="login-user" class="input" placeholder="ユーザー名" required>
+        <input id="login-pass" class="input" type="password" placeholder="パスワード" required>
+        <button class="btn" type="submit">ログイン</button>
+        <div id="err" style="color:#ef4444"></div>
+      </form>
+    </div>
   </div>
-
-  <?!= include('App'); ?>
-  <script>
-    const onEnter = e => { if (e.key==='Enter') handleLogin(); };
-    document.getElementById('username').addEventListener('keydown', onEnter);
-    document.getElementById('password').addEventListener('keydown', onEnter);
-    document.getElementById('loginBtn').addEventListener('click', handleLogin);
-  </script>
+  <script src="./assets/app.js"></script>
 </body>
 </html>
