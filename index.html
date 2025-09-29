@@ -1,567 +1,76 @@
-<!DOCTYPE html>
-<html lang="ja">
+<!DOCTYPE html><html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>生産管理システム</title>
-  <!-- Tailwind (CDN) -->
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>生産管理 | ダッシュボード</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Chart.js -->
+  <link rel="stylesheet" href="assets/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- QR -->
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-  <style>
-    :root { --brand:#6A67F3 }
-    body { font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI; background:#F8F9FA; color:#1F2937 }
-    .card { background:#fff; border:1px solid #E5E7EB; border-radius:14px; box-shadow:0 6px 14px rgba(0,0,0,.04) }
-    .btn  { background:var(--brand); color:#fff; border-radius:10px; padding:.65rem 1rem; font-weight:600 }
-    .btn:hover { filter:brightness(.95) }
-    .btn-secondary { background:#EEF2FF; color:#4338CA }
-    .chip { background:#EEF2FF; color:#4338CA; padding:.25rem .5rem; border-radius:.6rem; font-size:.75rem }
-    .nav-active { background:var(--brand); color:#fff }
-    .nav-inactive:hover { background:#EEF2FF }
-    .hidden { display:none }
-    @media (max-width: 1024px){ .grid-3 { grid-template-columns: 1fr } }
-    @media print { .no-print { display:none !important } }
-  </style>
 </head>
-<body>
+<body class="bg-surface text-ink">
+  <header id="app-header"></header>
 
-  <!-- Login -->
-  <section id="login-section" class="min-h-screen flex items-center justify-center p-4">
-    <div class="card w-full max-w-md p-8 text-center">
-      <img class="mx-auto w-20 h-20 mb-4" src="https://i.ibb.co/L1L150F/company-logo-placeholder.png" alt="logo">
-      <h1 class="text-2xl font-semibold mb-6">生産管理システム</h1>
-      <div class="space-y-3 text-left">
-        <input id="username" class="w-full border rounded-lg px-4 py-3" placeholder="ユーザー名">
-        <input id="password" type="password" class="w-full border rounded-lg px-4 py-3" placeholder="パスワード">
-        <button class="btn w-full" onclick="handleLogin()">ログイン</button>
-        <p id="login-error" class="text-red-600 text-sm mt-1"></p>
-      </div>
-    </div>
-  </section>
-
-  <!-- App -->
-  <section id="app-section" class="hidden min-h-screen">
-    <!-- Header -->
-    <header class="card sticky top-0 z-50 px-4 py-3 flex items-center justify-between gap-3 no-print">
-      <div class="flex items-center gap-3">
-        <img class="w-8 h-8" src="https://i.ibb.co/L1L150F/company-logo-placeholder.png" alt="logo">
-        <h2 class="text-lg font-semibold hidden sm:block">生産管理</h2>
-        <span id="user-info" class="chip ml-2"></span>
-      </div>
-      <nav class="flex gap-2">
-        <button id="nav-dashboard" class="px-3 py-2 rounded-lg nav-active" onclick="navigate('dashboard')">ダッシュボード</button>
-        <button id="nav-stock" class="px-3 py-2 rounded-lg nav-inactive" onclick="navigate('stock')">在庫一覧</button>
-        <button id="nav-delivery" class="px-3 py-2 rounded-lg nav-inactive" onclick="navigate('delivery')">出荷計画</button>
-      </nav>
-      <div class="flex items-center gap-2">
-        <button id="new-plan-btn" class="btn-secondary px-3 py-2 rounded-lg" onclick="openNewOrderModal()">+ 新規計画</button>
-        <button class="px-3 py-2 rounded-lg border" onclick="handleLogout()">ログアウト</button>
-      </div>
-    </header>
-
-    <!-- Main -->
-    <main class="p-4 space-y-6">
-      <!-- Dashboard -->
-      <div id="page-dashboard" class="">
-        <div class="card p-4">
-          <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-            <h3 class="text-lg font-semibold">現在の生産状況</h3>
-            <div class="flex gap-2">
-              <input id="searchInput" class="border rounded-lg px-3 py-2 w-full md:w-80" placeholder="ID等を入力しEnter…" onkeyup="filterTableOnEnter(event)">
-              <button class="px-3 py-2 rounded-lg border" onclick="filterTable()">🔍 検索</button>
-              <button class="px-3 py-2 rounded-lg border" onclick="openScannerForSearch()">📷 QR検索</button>
-            </div>
-          </div>
-          <div class="overflow-x-auto mt-3">
-            <table class="w-full text-left">
-              <thead class="text-xs uppercase text-gray-500">
-                <tr>
-                  <th class="py-3 px-3">得意先</th>
-                  <th class="py-3 px-3">製番号</th>
-                  <th class="py-3 px-3">品名</th>
-                  <th class="py-3 px-3">数量</th>
-                  <th class="py-3 px-3">生産開始日</th>
-                  <th class="py-3 px-3">ステータス</th>
-                  <th class="py-3 px-3">最終更新</th>
-                  <th class="py-3 px-3">アクション</th>
-                  <th class="py-3 px-3">書類印刷</th>
-                </tr>
-              </thead>
-              <tbody id="productionTableBody" class="divide-y"></tbody>
-            </table>
-          </div>
-          <div class="mt-3 flex flex-wrap gap-2">
-            <button class="px-3 py-2 rounded-lg border" onclick="printDashboard()">🖨️ ダッシュボード印刷</button>
-            <button class="px-3 py-2 rounded-lg border" onclick="exportData()">📄 CSVエクスポート</button>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div class="card p-4">
-            <h4 class="text-sm text-gray-500 mb-2">完成品在庫</h4>
-            <p id="stock-display" class="text-5xl font-bold text-gray-900 text-center">0</p>
-          </div>
-          <div class="card p-4">
-            <h4 class="text-sm text-gray-500 mb-2">月別出荷数</h4>
-            <canvas id="monthlyShipmentsChart"></canvas>
-          </div>
-          <div class="card p-4">
-            <h4 class="text-sm text-gray-500 mb-2">顧客別出荷数</h4>
-            <canvas id="customerShipmentsChart"></canvas>
-          </div>
+  <main class="p-4 space-y-6">
+    <section class="card p-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <h1 class="text-xl font-semibold">現在の生産状況</h1>
+        <div class="flex gap-2">
+          <input id="searchInput" class="input" placeholder="ID等を入力しEnter…" onkeyup="filterTableOnEnter(event)">
+          <button class="btn-outline" onclick="filterTable()">🔍 検索</button>
+          <button class="btn-outline" onclick="openScannerForSearch()">📷 QR検索</button>
         </div>
       </div>
-
-      <!-- Stock -->
-      <div id="page-stock" class="hidden">
-        <div class="card p-4">
-          <h3 class="text-lg font-semibold mb-3">完成品在庫の概要</h3>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <div class="card p-4 text-center"><div class="text-sm text-gray-500">合計在庫数</div><div id="stock-total" class="text-3xl font-bold text-indigo-600">0</div></div>
-            <div class="card p-4 text-center"><div class="text-sm text-gray-500">組立済</div><div id="stock-rakit" class="text-3xl font-bold text-indigo-600">0</div></div>
-            <div class="card p-4 text-center"><div class="text-sm text-gray-500">検査済</div><div id="stock-inspeksi" class="text-3xl font-bold text-indigo-600">0</div></div>
-            <div class="card p-4 text-center"><div class="text-sm text-gray-500">出荷準備</div><div id="stock-siap-kirim" class="text-3xl font-bold text-indigo-600">0</div></div>
-          </div>
-          <div class="overflow-x-auto mt-4">
-            <table class="w-full">
-              <thead class="text-xs uppercase text-gray-500"><tr><th class="py-2 px-3">ユニークID</th><th class="py-2 px-3">得意先</th><th class="py-2 px-3">製番号</th><th class="py-2 px-3">品名</th><th class="py-2 px-3">ステータス</th></tr></thead>
-              <tbody id="stockTableBody" class="divide-y"></tbody>
-            </table>
-          </div>
-        </div>
+      <div class="overflow-x-auto mt-3">
+        <table class="w-full">
+          <thead class="thead">
+            <tr><th>得意先</th><th>製番号</th><th>品名</th><th>数量</th><th>生産開始日</th><th>ステータス</th><th>最終更新</th><th>アクション</th><th>書類印刷</th></tr>
+          </thead>
+          <tbody id="productionTableBody" class="divide-y"></tbody>
+        </table>
       </div>
-
-      <!-- Delivery -->
-      <div id="page-delivery" class="hidden">
-        <div class="card p-4">
-          <div class="flex flex-col md:flex-row md:items-end gap-3">
-            <div>
-              <label class="text-sm text-gray-600">出荷予定日</label>
-              <input type="date" id="delivery-date-filter" class="border rounded-lg px-3 py-2">
-            </div>
-            <div class="flex gap-2">
-              <button class="btn" onclick="loadDeliveryData()">日付で絞り込み</button>
-              <button class="px-3 py-2 rounded-lg border" onclick="printDeliveryList()">🖨️ 選択したリストを印刷</button>
-            </div>
-          </div>
-          <div class="overflow-x-auto mt-4">
-            <table class="w-full">
-              <thead class="text-xs uppercase text-gray-500"><tr><th class="py-2 px-3"><input type="checkbox" onchange="toggleAllCheckboxes(this)"></th><th class="py-2 px-3">得意先</th><th class="py-2 px-3">製番号</th><th class="py-2 px-3">品名</th><th class="py-2 px-3">品番</th></tr></thead>
-              <tbody id="deliveryTableBody" class="divide-y"></tbody>
-            </table>
-          </div>
-        </div>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button class="btn-outline" onclick="printDashboard()">🖨️ ダッシュボード印刷</button>
+        <button class="btn-outline" onclick="exportData()">📄 CSVエクスポート</button>
       </div>
-    </main>
-  </section>
+    </section>
 
-  <!-- Scanner Modal -->
-  <div id="scannerModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4">
-    <div class="card w-full max-w-md p-4">
-      <div class="flex items-center justify-between mb-2">
-        <h3 id="scanner-title" class="font-semibold">QRコードスキャン</h3>
-        <button class="px-2 py-1 border rounded" onclick="closeScanner()">✕</button>
+    <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="card p-4 text-center">
+        <div class="label">完成品在庫</div>
+        <div id="stock-display" class="stat">0</div>
       </div>
-      <div id="reader" style="width: 100%;"></div>
-    </div>
-  </div>
-
-  <!-- New/Edit Modal -->
-  <div id="newOrderModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4">
-    <form id="new-order-form" class="card w-full max-w-xl p-4">
-      <div class="flex items-center justify-between">
-        <h3 id="modal-title" class="text-lg font-semibold">新規生産計画</h3>
-        <button type="button" class="px-2 py-1 border rounded" onclick="closeNewOrderModal()">✕</button>
+      <div class="card p-4">
+        <div class="label">月別出荷数</div>
+        <canvas id="monthlyShipmentsChart" height="220"></canvas>
       </div>
-      <input type="hidden" id="edit-mode-id">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-        <div><label class="text-sm text-gray-600">得意先</label><select id="customer" class="border rounded-lg w-full px-3 py-2"></select></div>
-        <div><label class="text-sm text-gray-600">図番</label><select id="drawNo" class="border rounded-lg w-full px-3 py-2"></select></div>
-        <div><label class="text-sm text-gray-600">品名</label><select id="prodName" class="border rounded-lg w-full px-3 py-2"></select></div>
-        <div><label class="text-sm text-gray-600">製番号</label><input id="prodNo" class="border rounded-lg w-full px-3 py-2"></div>
-        <div><label class="text-sm text-gray-600">品番</label><input id="partNo" class="border rounded-lg w-full px-3 py-2"></div>
-        <div><label class="text-sm text-gray-600">数量</label><input type="number" min="1" value="1" id="quantity" class="border rounded-lg w-full px-3 py-2"></div>
-        <div><label class="text-sm text-gray-600">生産開始日</label><input type="date" id="startDate" class="border rounded-lg w-full px-3 py-2"></div>
+      <div class="card p-4">
+        <div class="label">顧客別出荷数</div>
+        <canvas id="customerShipmentsChart" height="220"></canvas>
       </div>
-      <div class="mt-4 flex justify-end">
-        <button type="button" id="modal-submit-button" class="btn" onclick="submitOrder()">作成</button>
+    </section>
+
+    <section class="card p-4">
+      <h2 class="text-lg font-semibold mb-3">完成品在庫の概要</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="kpi"><div class="kpi-title">合計在庫数</div><div id="stock-total" class="kpi-value">0</div></div>
+        <div class="kpi"><div class="kpi-title">組立済</div><div id="stock-rakit" class="kpi-value">0</div></div>
+        <div class="kpi"><div class="kpi-title">検査済</div><div id="stock-inspeksi" class="kpi-value">0</div></div>
+        <div class="kpi"><div class="kpi-title">出荷準備</div><div id="stock-siap-kirim" class="kpi-value">0</div></div>
       </div>
-    </form>
-  </div>
-
-  <!-- Update Status Modal -->
-  <div id="updateStatusModal" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4">
-    <div class="card w-full max-w-md p-4">
-      <div class="flex items-center justify-between">
-        <h3 id="update-modal-title" class="text-lg font-semibold">ステータス更新</h3>
-        <button class="px-2 py-1 border rounded" onclick="closeUpdateStatusModal()">✕</button>
+      <div class="overflow-x-auto mt-4">
+        <table class="w-full">
+          <thead class="thead"><tr><th>ユニークID</th><th>得意先</th><th>製番号</th><th>品名</th><th>ステータス</th></tr></thead>
+          <tbody id="stockTableBody" class="divide-y"></tbody>
+        </table>
       </div>
-      <input type="hidden" id="update-id">
-      <div class="mt-3">
-        <select id="status-select" class="border rounded-lg w-full px-3 py-2"></select>
-      </div>
-      <div id="shipping-date-container" class="hidden mt-3">
-        <label class="text-sm text-gray-600">出荷予定日</label>
-        <input type="date" id="shipping-date" class="border rounded-lg w-full px-3 py-2">
-      </div>
-      <div class="mt-4 flex justify-end">
-        <button class="btn" onclick="submitStatusUpdate()">更新</button>
-      </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-<script>
-/* ==== CONFIG ==== */
-const API_BASE = "https://script.google.com/macros/s/AKfycbwqwycLMS5k1vu51EzhpoXksdUOnkRoGsgtfpisbZfJcDHN62wMpaWS-18TVFONUTBAmg/exec"; // <- ganti!
-const ALL_STATUSES = ["材料準備","レーザ工程","曲げ工程","外枠組立工程","シャッター組立工程","シャッター溶接工程","コーキング工程","外枠塗装工程","組立工程（組立中）","組立工程（組立済）","外注","検査工程","検査済","検査保留","出荷準備","出荷済"];
-const PERMISSIONS = {
-  "生産管理部": { canCreate: true,  allowedStatuses: ["出荷準備","出荷済"] },
-  "製造部":     { canCreate: false, allowedStatuses: ["材料準備","レーザ工程","曲げ工程","外枠組立工程","シャッター組立工程","シャッター溶接工程","コーキング工程","外枠塗装工程","組立工程（組立中）","組立工程（組立済）","外注"] },
-  "検査部":     { canCreate: false, allowedStatuses: ["検査工程","検査済","検査保留"] },
-  "admin":      { canCreate: true,  allowedStatuses: ALL_STATUSES }
-};
+  <!-- Modals -->
+  <div id="scannerModal" class="modal"></div>
+  <div id="newOrderModal" class="modal"></div>
+  <div id="updateStatusModal" class="modal"></div>
 
-/* ==== STATE ==== */
-let currentUser = null;
-let lastTs = 0;
-let pollHandle = null;
-let monthlyChart = null;
-let customerChart = null;
-let html5QrCode = null;
-let orderIdToUpdateViaScan = null;
-let isScanForSearch = false;
-
-/* ==== API ==== */
-async function post(action, payload={}){
-  const res = await fetch(API_BASE, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({action, ...payload})
-  });
-  return res.json();
-}
-
-/* ==== AUTH ==== */
-async function handleLogin(){
-  const username = document.getElementById('username').value.trim();
-  const password = document.getElementById('password').value.trim();
-  const out = await post('login', {username,password});
-  if (out.success){
-    currentUser = out.user;
-    document.getElementById('user-info').textContent = `ようこそ, ${currentUser.fullName} 様 (${currentUser.role})`;
-    document.getElementById('login-section').classList.add('hidden');
-    document.getElementById('app-section').classList.remove('hidden');
-    const canCreate = PERMISSIONS[currentUser.role]?.canCreate;
-    document.getElementById('new-plan-btn').classList.toggle('hidden', !canCreate);
-    await loadMasterData();
-    navigate('dashboard');
-    startRealtime();
-  }else{
-    document.getElementById('login-error').textContent = out.message || 'ログイン失敗';
-  }
-}
-function handleLogout(){
-  stopRealtime();
-  currentUser = null;
-  location.reload();
-}
-
-/* ==== REALTIME (poll 2s) ==== */
-function startRealtime(){
-  stopRealtime();
-  const tick = async ()=>{
-    const out = await post('getIfChanged',{sinceTs:lastTs});
-    if (out.changed){
-      lastTs = out.ts || Date.now();
-      if (out.production) renderProductionTable(out.production);
-      if (out.chart) renderCharts(out.chart);
-    }
-  };
-  tick();
-  pollHandle = setInterval(tick, 2000);
-}
-function stopRealtime(){ if (pollHandle){ clearInterval(pollHandle); pollHandle = null; } }
-
-/* ==== NAV ==== */
-function navigate(name){
-  const pages = ['dashboard','stock','delivery'];
-  pages.forEach(p=>{
-    document.getElementById(`page-${p}`).classList.toggle('hidden', p!==name);
-    document.getElementById(`nav-${p}`).classList.toggle('nav-active', p===name);
-    document.getElementById(`nav-${p}`).classList.toggle('nav-inactive', p!==name);
-  });
-  if (name==='stock') loadStockData();
-  if (name==='delivery') loadDeliveryData();
-}
-
-/* ==== MASTER ==== */
-async function loadMasterData(){
-  const res = await post('getMaster');
-  if (!res.success) return;
-  const fill = (id, arr, ph) => {
-    const el = document.getElementById(id);
-    el.innerHTML = `<option value="" disabled selected>${ph}</option>` + arr.map(v=>`<option>${v}</option>`).join('');
-  };
-  fill('customer', res.customers, '得意先を選択…');
-  fill('drawNo', res.drawingNumbers, '図番を選択…');
-  fill('prodName', res.productNames, '品名を選択…');
-}
-
-/* ==== DASHBOARD TABLE ==== */
-function renderProductionTable(data){
-  const tbody = document.getElementById('productionTableBody');
-  tbody.innerHTML = '';
-  data.forEach(row=>{
-    const orderId = row[0], status=row[7];
-    const isShip = ["出荷準備","出荷済"].includes(status);
-    const isFinished = ["組立済","検査済","出荷準備","出荷済"].includes(status);
-    const tr = document.createElement('tr');
-    tr.className = "hover:bg-indigo-50/40";
-    tr.innerHTML = `
-      <td class="py-3 px-3">${row[1]}</td>
-      <td class="py-3 px-3">${row[2]}</td>
-      <td class="py-3 px-3">${row[3]}</td>
-      <td class="py-3 px-3">${row[10]}</td>
-      <td class="py-3 px-3">${row[6]||''}</td>
-      <td class="py-3 px-3">${row[7]}</td>
-      <td class="py-3 px-3">${row[8]}</td>
-      <td class="py-3 px-3">
-        <div class="flex flex-wrap gap-2">
-          <button class="px-2 py-1 rounded bg-amber-500 text-white" onclick="initiateStationScan('${orderId}')">スキャン更新</button>
-          <button class="px-2 py-1 rounded bg-indigo-600 text-white" onclick="openUpdateStatusModal('${orderId}','${row[2]}')">手動更新</button>
-          <button class="px-2 py-1 rounded bg-green-600 text-white" onclick="openEditModal('${orderId}')">編集</button>
-          <button class="px-2 py-1 rounded bg-red-600 text-white" onclick="deleteOrder('${orderId}')">削除</button>
-          <button class="px-2 py-1 rounded bg-gray-600 text-white" onclick="exportItemHistory('${orderId}','${row[2]}')">履歴</button>
-        </div>
-      </td>
-      <td class="py-3 px-3">
-        <button class="px-2 py-1 rounded border" onclick="printGenpin('${orderId}')" ${!isFinished?'disabled':''}>現品票</button>
-        <button class="px-2 py-1 rounded border" onclick="printShukka('${orderId}')" ${!isShip?'disabled':''}>出荷確認書</button>
-      </td>`;
-    tbody.appendChild(tr);
-  });
-}
-async function loadProductionData(){
-  const out = await post('getProduction');
-  renderProductionTable(out.data || []);
-}
-
-/* ==== CHARTS ==== */
-function renderCharts(data){
-  document.getElementById('stock-display').textContent = data.stock;
-  const mctx = document.getElementById('monthlyShipmentsChart');
-  const cctx = document.getElementById('customerShipmentsChart');
-  if (monthlyChart) monthlyChart.destroy();
-  if (customerChart) customerChart.destroy();
-
-  monthlyChart = new Chart(mctx, { type:'bar', data:{
-    labels:Object.keys(data.monthly),
-    datasets:[{label:'月別出荷数', data:Object.values(data.monthly), backgroundColor:'rgba(106,103,243,.7)'}]
-  }, options:{responsive:true, maintainAspectRatio:false, scales:{y:{beginAtZero:true}}}});
-
-  customerChart = new Chart(cctx, { type:'pie', data:{
-    labels:Object.keys(data.customer),
-    datasets:[{ data:Object.values(data.customer), backgroundColor:['#6A67F3','#8B88F5','#A9A7F7','#C8C6F9','#E6E5FB']}]
-  }, options:{responsive:true, maintainAspectRatio:false}});
-}
-async function loadChartData(){ renderCharts(await post('getCharts')); }
-
-/* ==== STOCK ==== */
-async function loadStockData(){
-  const res = await post('getStock');
-  document.getElementById('stock-total').textContent = res.summary.total;
-  document.getElementById('stock-rakit').textContent = res.summary["組立済"];
-  document.getElementById('stock-inspeksi').textContent = res.summary["検査済"];
-  document.getElementById('stock-siap-kirim').textContent = res.summary["出荷準備"];
-  const tb = document.getElementById('stockTableBody'); tb.innerHTML='';
-  res.details.forEach(r=>{
-    const tr=document.createElement('tr');
-    tr.innerHTML = `<td class="py-2 px-3">${r[0]}</td><td class="py-2 px-3">${r[1]}</td><td class="py-2 px-3">${r[2]}</td><td class="py-2 px-3">${r[3]}</td><td class="py-2 px-3">${r[7]}</td>`;
-    tb.appendChild(tr);
-  });
-}
-
-/* ==== DELIVERY ==== */
-async function loadDeliveryData(){
-  const input = document.getElementById('delivery-date-filter');
-  if (!input.value){
-    const today = new Date(); const off=today.getTimezoneOffset();
-    input.value = new Date(today.getTime()-off*60000).toISOString().split('T')[0];
-  }
-  const out = await post('getDelivery',{date:input.value});
-  const tb = document.getElementById('deliveryTableBody'); tb.innerHTML='';
-  out.data.forEach(r=>{
-    const tr=document.createElement('tr');
-    tr.dataset.customer = r[1]; tr.dataset.prodNo = r[2]; tr.dataset.prodName=r[3]; tr.dataset.partNo=r[4];
-    tr.innerHTML = `<td class="py-2 px-3"><input type="checkbox" class="delivery-checkbox"></td>
-    <td class="py-2 px-3">${r[1]}</td><td class="py-2 px-3">${r[2]}</td><td class="py-2 px-3">${r[3]}</td><td class="py-2 px-3">${r[4]}</td>`;
-    tb.appendChild(tr);
-  });
-}
-
-/* ==== UTIL ==== */
-function toggleAllCheckboxes(master){ document.querySelectorAll('.delivery-checkbox').forEach(cb=>cb.checked=master.checked); }
-function filterTableOnEnter(e){ if (e.key==='Enter') filterTable(); }
-function filterTable(){
-  const f = document.getElementById('searchInput').value.toUpperCase();
-  document.querySelectorAll('#productionTableBody tr').forEach(tr=>{
-    const txt = tr.textContent.toUpperCase();
-    tr.style.display = txt.includes(f) ? '' : 'none';
-  });
-}
-
-/* ==== NEW/EDIT ==== */
-function openNewOrderModal(){
-  const ok = PERMISSIONS[currentUser.role]?.canCreate; if (!ok) return alert("この役割では新規計画を作成できません。");
-  document.getElementById('modal-title').textContent="新規生産計画";
-  document.getElementById('modal-submit-button').textContent="作成";
-  document.getElementById('edit-mode-id').value = "";
-  document.getElementById('newOrderModal').classList.remove('hidden');
-  document.getElementById('newOrderModal').classList.add('flex');
-}
-function closeNewOrderModal(){
-  document.getElementById('newOrderModal').classList.add('hidden');
-  document.getElementById('newOrderModal').classList.remove('flex');
-}
-async function submitOrder(){
-  const editId = document.getElementById('edit-mode-id').value;
-  const order = {
-    id: editId,
-    customer: document.getElementById('customer').value,
-    drawNo: document.getElementById('drawNo').value,
-    prodName: document.getElementById('prodName').value,
-    prodNo: document.getElementById('prodNo').value,
-    partNo: document.getElementById('partNo').value,
-    quantity: document.getElementById('quantity').value,
-    startDate: document.getElementById('startDate').value,
-    user: currentUser.fullName
-  };
-  if (!order.customer || !order.prodNo || !order.startDate || !order.quantity) return alert("得意先、製番号、数量、生産開始日は必須項目です。");
-  const action = editId ? 'updateOrder' : 'createOrder';
-  const res = await post(action, {order});
-  alert(res.message || (res.success?'OK':'NG'));
-  if (res.success){
-    closeNewOrderModal();
-    await loadProductionData();
-  }
-}
-async function openEditModal(id){
-  const res = await post('getOrder',{id});
-  if (!res.success) return alert(res.message||'NG');
-  const d = res.data;
-  document.getElementById('modal-title').textContent="生産計画の編集";
-  document.getElementById('modal-submit-button').textContent="更新";
-  document.getElementById('edit-mode-id').value = d.id;
-  document.getElementById('customer').value = d.customer;
-  document.getElementById('drawNo').value = d.drawNo;
-  document.getElementById('prodName').value = d.prodName;
-  document.getElementById('prodNo').value = d.prodNo;
-  document.getElementById('partNo').value = d.partNo;
-  document.getElementById('quantity').value = d.quantity;
-  document.getElementById('startDate').value = d.startDate;
-  document.getElementById('newOrderModal').classList.remove('hidden');
-  document.getElementById('newOrderModal').classList.add('flex');
-}
-async function deleteOrder(id){
-  if (!confirm("このオーダーを本当に削除しますか？")) return;
-  const res = await post('deleteOrder',{id});
-  alert(res.message||'削除'); if (res.success) loadProductionData();
-}
-
-/* ==== STATUS ==== */
-function openUpdateStatusModal(id, prodNo){
-  document.getElementById('update-id').value = id;
-  document.getElementById('update-modal-title').innerHTML = `ステータス更新: <span class="font-normal">${prodNo}</span>`;
-  const sel = document.getElementById('status-select');
-  const allowed = PERMISSIONS[currentUser.role]?.allowedStatuses || [];
-  sel.innerHTML = allowed.map(s=>`<option>${s}</option>`).join('');
-  document.getElementById('shipping-date-container').classList.add('hidden');
-  sel.onchange = ()=> {
-    if (sel.value==='出荷準備') document.getElementById('shipping-date-container').classList.remove('hidden');
-    else document.getElementById('shipping-date-container').classList.add('hidden');
-  };
-  document.getElementById('updateStatusModal').classList.remove('hidden');
-  document.getElementById('updateStatusModal').classList.add('flex');
-}
-function closeUpdateStatusModal(){
-  document.getElementById('updateStatusModal').classList.add('hidden');
-  document.getElementById('updateStatusModal').classList.remove('flex');
-}
-async function submitStatusUpdate(){
-  const id = document.getElementById('update-id').value;
-  const newStatus = document.getElementById('status-select').value;
-  let shippingDate = null;
-  if (newStatus==='出荷準備'){
-    shippingDate = document.getElementById('shipping-date').value;
-    if (!shippingDate) return alert("出荷予定日を入力してください。");
-  }
-  const res = await post('updateStatus',{id,newStatus, user:currentUser.fullName, role:currentUser.role, shippingDate});
-  alert(res.message||'OK');
-  if (res.success){
-    closeUpdateStatusModal();
-    loadProductionData();
-    loadChartData();
-  }
-}
-
-/* ==== HISTORY CSV ==== */
-async function exportItemHistory(id, prodNo){
-  const res = await post('getHistory',{id});
-  const rows = res.data || [];
-  if (!rows.length) return alert("履歴なし");
-  let csv = "日時,ステータス,担当者\n";
-  rows.forEach(l=> csv += `"${l.timestamp}","${l.status}","${l.user}"\n`);
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  link.download = `history_${prodNo}_${id}.csv`;
-  link.click();
-}
-
-/* ==== PRINT ==== */
-function printDashboard(){ window.print(); }
-async function printGenpin(id){
-  // Untuk ringkas, gunakan window.open + server data (seperti versi lama).
-  // Kamu bisa port penuh bila perlu.
-  alert("Cetak現品票: implementasi singkat – bisa diport penuh dari versi GAS lama.");
-}
-async function printShukka(id){
-  alert("Cetak出荷確認書: implementasi singkat – bisa diport penuh dari versi GAS lama.");
-}
-
-/* ==== QR ==== */
-function openScanner(){ 
-  const modal = document.getElementById('scannerModal');
-  modal.classList.remove('hidden'); modal.classList.add('flex');
-  html5QrCode = new Html5Qrcode("reader");
-  const config = { fps:10, qrbox:{ width:250, height:250 } };
-  html5QrCode.start({ facingMode:"environment" }, config, onScanSuccess);
-}
-function closeScanner(){
-  const modal = document.getElementById('scannerModal');
-  if (html5QrCode && html5QrCode.isScanning) html5QrCode.stop().catch(console.warn);
-  modal.classList.add('hidden'); modal.classList.remove('flex');
-}
-function openScannerForSearch(){ isScanForSearch = true; document.getElementById('scanner-title').textContent="現品票のQRコードをスキャンしてください"; openScanner(); }
-function initiateStationScan(id){ orderIdToUpdateViaScan=id; isScanForSearch=false; document.getElementById('scanner-title').textContent="工程QRコードをスキャンしてください"; openScanner(); }
-async function onScanSuccess(text){
-  closeScanner();
-  if (isScanForSearch){
-    document.getElementById('searchInput').value = text; filterTable();
-  }else{
-    if (!orderIdToUpdateViaScan) return alert("対象オーダーなし");
-    if (!ALL_STATUSES.includes(text)) return alert(`無効な工程QR: ${text}`);
-    const res = await post('updateStatus',{id:orderIdToUpdateViaScan, newStatus:text, user:currentUser.fullName, role:currentUser.role});
-    alert(res.message||'OK'); if (res.success) loadProductionData();
-    orderIdToUpdateViaScan = null;
-  }
-}
-
-/* ==== Init small UX ==== */
-document.getElementById('password').addEventListener('keydown', e=>{ if (e.key==='Enter') handleLogin(); });
-</script>
-</body>
-</html>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <script src="assets/app.js"></script>
+  <script>bootstrapPage('dashboard');</script>
+</body></html>
