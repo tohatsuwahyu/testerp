@@ -1,223 +1,249 @@
-/* ===========================
-   TSH Frontend App — app.js
-   =========================== */
-const API_BASE = "https://script.google.com/macros/s/AKfycbwqwycLMS5k1vu51EzhpoXksdUOnkRoGsgtfpisbZfJcDHN62wMpaWS-18TVFONUTBAmg/exec"; // 
+/* ========= CONFIG ========= */
+// Ganti dengan URL Web App GAS kamu (…/exec). Contoh:
+const API_BASE = 'https://script.google.com/macros/s/AKfycbwqwycLMS5k1vu51EzhpoXksdUOnkRoGsgtfpisbZfJcDHN62wMpaWS-18TVFONUTBAmg/exec';
+// Kalau backend pakai HMAC_SECRET, isi sama string-nya. Kalau tidak, kosongkan.
+const HMAC_SECRET = ''; // contoh: 'tokyo seimitsu hatsujo'
 
-const REFRESH_MS = 15000;
-const $ = (s,r=document)=>r.querySelector(s);
-const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+/* ========= HELPERS ========= */
+const $ = (sel) => document.querySelector(sel);
+const setText = (el, t) => { if (el) el.textContent = t; };
 
-function saveAuth(a){ localStorage.setItem('auth', JSON.stringify(a)); }
-function loadAuth(){ try{ return JSON.parse(localStorage.getItem('auth')||'{}'); }catch{ return {}; } }
-function clearAuth(){ localStorage.removeItem('auth'); }
-
-async function apiPost(action, payload={}){
-  const auth = loadAuth();
-  const body = { action, token: auth.token, ...payload };
-  let j;
-  try{
-    const res = await fetch(API_BASE, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
-    j = await res.json();
-  }catch(e){ throw new Error('Tidak dapat terhubung ke API. Cek API_BASE & deployment.'); }
-  if(!j.ok) throw new Error(j.error||'Request failed');
-  return j;
-}
-async function apiGet(action, params={}){
-  const auth = loadAuth();
-  const q = new URLSearchParams({ action, token: auth.token, ...params });
-  let j;
-  try{
-    const res = await fetch(`${API_BASE}?${q.toString()}`);
-    j = await res.json();
-  }catch(e){ throw new Error('Tidak dapat terhubung ke API. Cek API_BASE & deployment.'); }
-  if(!j.ok) throw new Error(j.error||'Request failed');
-  return j;
+function hmacHex(secret, msg) {
+  if (!secret) return '';
+  // simple fallback HMAC (SubtleCrypto). Jika browser lama, biarkan kosong → backend bypass.
+  if (!('crypto' in window) || !window.crypto.subtle) return '';
+  const enc = new TextEncoder();
+  return window.crypto.subtle.importKey('raw', enc.encode(secret), {name:'HMAC', hash:'SHA-256'}, false, ['sign'])
+    .then(key => window.crypto.subtle.sign('HMAC', key, enc.encode(msg)))
+    .then(buf => Array.from(new Uint8Array(buf)).map(b=>('0'+b.toString(16)).slice(-2)).join(''))
+    .catch(()=> '');
 }
 
-function showLogin(){ $('#login-card')?.classList.remove('hidden'); $('#app')?.classList.add('hidden'); }
-function showApp(){ $('#login-card')?.classList.add('hidden'); $('#app')?.classList.remove('hidden'); }
-function setRoleVisibility(role){
-  $$('[data-roles]').forEach(el=>{
-    const allow = el.getAttribute('data-roles').split(',').map(s=>s.trim());
-    el.style.display = (role==='admin' || allow.includes(role)) ? '' : 'none';
-  });
-}
-function bindLogout(){
-  ['#btn-logout','[data-action="logout"]'].forEach(sel=>{
-    $$(sel).forEach(el=>{ el.onclick = (e)=>{ e.preventDefault(); logout(); }; });
-  });
+async function postJSON(route, payload={}) {
+  const body = JSON.stringify({ route, ...payload });
+  const headers = { 'Content-Type':'application/json' };
+  const sig = await hmacHex(HMAC_SECRET, body);
+  if (sig) headers['x-sign'] = sig;
+
+  const res = await fetch(API_BASE, { method:'POST', headers, body });
+  const data = await res.json();
+  if (!data.ok) throw new Error(data.message || 'API error');
+  return data;
 }
 
-function showError(msg){ const el=$('#login-error'); if(el){ el.textContent=msg; } else alert(msg); }
-
-async function doLogin(e){
-  e?.preventDefault?.();
-  const u = $('#username')?.value?.trim();
-  const p = $('#password')?.value?.trim();
-  if(!u||!p) return showError('Harap isi username & password');
-  try{
-    const { token, user } = await apiPost('login', { username:u, password:p });
-    saveAuth({ token, user });
-    location.href = 'index.html';
-  }catch(err){ showError(err.message); }
+async function getJSON(query='action=ping') {
+  const url = `${API_BASE}?${query}`;
+  const res = await fetch(url);
+  return res.json();
 }
 
-function logout(){ try{ clearAuth(); }finally{ location.replace('index.html'); } }
+function requireLogin() {
+  const raw = localStorage.getItem('session');
+  if (!raw) return null;
+  try { return JSON.parse(raw); } catch { return null; }
+}
+function saveSession(user) { localStorage.setItem('session', JSON.stringify(user)); }
+function clearSession() { localStorage.removeItem('session'); }
 
-/* ---------- DASHBOARD ---------- */
-async function loadProductionTable(){
-  const body = $('#table-body'); if(!body) return;
-  body.innerHTML = `<tr><td colspan="8">Loading...</td></tr>`;
-  const { rows } = await apiGet('production');
-  body.innerHTML = '';
-  rows.forEach(r=>{
-    const [id,customer,prodNo,prodName,partNo,drawNo,startDate,status,lastUpd,shipDate,qty] = r;
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${customer}</td><td>${prodNo}</td><td>${prodName}</td>
-      <td class="right">${qty}</td><td>${startDate||''}</td>
-      <td><span class="badge">${status}</span></td><td>${lastUpd||''}</td>
-      <td class="actions">
-        <a class="nav-btn" href="tickets.html?id=${encodeURIComponent(id)}">🧾</a>
-        <button class="nav-btn danger" data-roles="admin" onclick="removeOrder('${id}')">🗑️</button>
-      </td>`;
-    body.appendChild(tr);
-  });
-  const role = loadAuth()?.user?.role;
-  setRoleVisibility(role);
+/* ========= PAGE BOOT ========= */
+document.addEventListener('DOMContentLoaded', async () => {
+  // elemen umum (jika ada)
+  const who = $('#whoami');
+  const logoutBtn = $('#logoutBtn');
+  if (logoutBtn) logoutBtn.onclick = () => { clearSession(); location.href = './index.html'; };
+
+  const user = requireLogin();
+  if (who && user) setText(who, `ようこそ, ${user.fullName} 様 (${user.role})`);
+
+  // routing sederhana berdasar halaman
+  const path = location.pathname;
+
+  if (path.endsWith('/index.html') || path.endsWith('/')) {
+    await bootIndex(user);
+  } else if (path.endsWith('/charts.html')) {
+    if (!user) return location.href='./index.html';
+    await bootCharts(user);
+  } else if (path.endsWith('/delivery.html')) {
+    if (!user) return location.href='./index.html';
+    await bootDelivery(user);
+  } else if (path.endsWith('/tickets.html')) {
+    if (!user) return location.href='./index.html';
+    await bootTickets(user);
+  }
+});
+
+/* ========= INDEX (Dashboard + Login) ========= */
+async function bootIndex(user) {
+  const loginCard = $('#loginCard');
+  const dash = $('#dashboard');
+  const msg = $('#loginMsg');
+  const u = $('#username'), p = $('#password'), btn = $('#loginBtn');
+
+  // tombol enter → login
+  if (p) p.addEventListener('keydown', (e)=>{ if (e.key==='Enter') btn.click(); });
+
+  // cek API
+  try {
+    await getJSON('action=ping');
+    if (msg) setText(msg, '');
+  } catch {
+    if (msg) setText(msg, 'Tidak dapat terhubung ke API. Cek API_BASE & deployment.');
+  }
+
+  if (!user) {
+    if (loginCard) loginCard.classList.remove('hidden');
+    if (dash) dash.classList.add('hidden');
+  } else {
+    if (loginCard) loginCard.classList.add('hidden');
+    if (dash) dash.classList.remove('hidden');
+    loadDashboard();
+  }
+
+  if (btn) btn.onclick = async () => {
+    try {
+      const resp = await postJSON('login', { username: u.value.trim(), password: p.value.trim() });
+      saveSession(resp.user);
+      location.reload();
+    } catch(err) {
+      if (msg) setText(msg, err.message);
+    }
+  };
 }
 
-async function loadMasters(){ /* optional untuk modal – tidak wajib di contoh minimal */ }
-
-async function loadDashboard(){
-  bindLogout();
-  // enter to login
-  $('#password')?.addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(e); });
-  $('#login-form')?.addEventListener('submit',doLogin);
-
-  // nav
-  $('#nav-dashboard')?.addEventListener('click',()=>location.href='index.html');
-  $('#nav-charts')?.addEventListener('click',()=>location.href='charts.html');
-  $('#nav-delivery')?.addEventListener('click',()=>location.href='delivery.html');
-  $('#nav-tickets')?.addEventListener('click',()=>location.href='tickets.html');
-
-  const auth = loadAuth();
-  if(!auth.token){ showLogin(); return; }
-
-  try{
-    showApp();
-    $('#user-info') && ($('#user-info').textContent = `${auth.user.fullName}（${auth.user.role}）`);
-    await loadProductionTable();
-    setInterval(loadProductionTable, REFRESH_MS);
-    $('#btn-export')?.addEventListener('click', exportCSV);
-    $('#btn-print')?.addEventListener('click', ()=>window.print());
-  }catch(err){
-    console.warn(err);
-    showError('Sesi kadaluarsa / API error. Silakan login ulang.');
-    clearAuth(); showLogin();
+async function loadDashboard() {
+  try {
+    const prod = await postJSON('get_production', {});
+    const table = $('#prodTable tbody');
+    if (table) {
+      table.innerHTML = '';
+      (prod.data || []).forEach(row => {
+        const tr = document.createElement('tr');
+        // [id, customer, prodNo, prodName, partNo, drawNo, startDate, status, updateInfo, shipDate, qty]
+        tr.innerHTML = `<td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[10]||''}</td>
+                        <td>${row[6]||''}</td><td>${row[7]||''}</td><td>${row[8]||''}</td>`;
+        table.appendChild(tr);
+      });
+    }
+    const chart = await postJSON('get_chart',{});
+    const stockEl = $('#stockNumber');
+    if (stockEl) setText(stockEl, chart.stock ?? 0);
+  } catch(err) {
+    console.error(err);
   }
 }
 
-async function exportCSV(){
-  const { rows } = await apiGet('production');
-  let csv = "ID,得意先,製番号,品名,品番,図番,生産開始日,ステータス,最終更新,出荷予定日,数量\n";
-  rows.forEach(r=>{ csv += r.map(x=>`"${String(x??'').replace(/"/g,'""')}"`).join(",") + "\r\n"; });
-  const a = document.createElement('a');
-  a.href = "data:text/csv;charset=utf-8," + encodeURIComponent(csv);
-  a.download = "data_produksi.csv"; document.body.appendChild(a); a.click(); a.remove();
+/* ========= CHARTS ========= */
+async function bootCharts() {
+  const st = await postJSON('get_chart',{});
+  const stockEl = $('#stockNumber');
+  if (stockEl) setText(stockEl, st.stock ?? 0);
+
+  const m = st.monthly || {};
+  const c = st.customer || {};
+
+  const monthlyCtx = document.getElementById('monthly').getContext('2d');
+  new Chart(monthlyCtx, {
+    type:'bar',
+    data:{ labels:Object.keys(m), datasets:[{ label:'月別出荷数', data:Object.values(m) }] },
+    options:{ responsive:true, scales:{ y:{ beginAtZero:true } } }
+  });
+
+  const custCtx = document.getElementById('customer').getContext('2d');
+  new Chart(custCtx, {
+    type:'pie',
+    data:{ labels:Object.keys(c), datasets:[{ data:Object.values(c) }] },
+    options:{ responsive:true }
+  });
 }
 
-/* ---------- CHARTS ---------- */
-async function loadChartsPage(){
-  bindLogout();
-  const auth = loadAuth(); if(!auth.token) return location.href='index.html';
-  $('#who').textContent = `${auth.user.fullName}（${auth.user.role}）`;
-  const { stock, monthly, customer } = await apiGet('charts');
-  $('#stock-display').textContent = stock;
-  const mctx = $('#monthlyShipmentsChart').getContext('2d');
-  new Chart(mctx,{type:'bar',data:{labels:Object.keys(monthly),datasets:[{label:'月別出荷数',data:Object.values(monthly)}]},options:{scales:{y:{beginAtZero:true}}}});
-  const cctx = $('#customerShipmentsChart').getContext('2d');
-  new Chart(cctx,{type:'pie',data:{labels:Object.keys(customer),datasets:[{data:Object.values(customer)}]}});
-}
+/* ========= DELIVERY ========= */
+async function bootDelivery() {
+  const input = $('#shipDate');
+  const btn = $('#loadDelivery');
+  const today = new Date();
+  input.value = new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().split('T')[0];
 
-/* ---------- DELIVERY ---------- */
-function fmtDateISO(d){ const dt=new Date(d||Date.now()); const o=dt.getTimezoneOffset(); return new Date(dt.getTime()-o*60000).toISOString().slice(0,10); }
-async function loadDeliveryPage(){
-  bindLogout();
-  const auth = loadAuth(); if(!auth.token) return location.href='index.html';
-  $('#who').textContent = `${auth.user.fullName}（${auth.user.role}）`;
-  const dateInput = $('#delivery-date'); if(!dateInput.value) dateInput.value = fmtDateISO();
-  async function refresh(){
-    const { rows } = await apiGet('delivery', { date: dateInput.value });
-    const body = $('#delivery-body'); body.innerHTML='';
-    rows.forEach(row=>{
-      const tr=document.createElement('tr');
-      tr.dataset.customer=row[1]; tr.dataset.prodNo=row[2]; tr.dataset.prodName=row[3]; tr.dataset.partNo=row[4];
-      tr.innerHTML = `<td><input type="checkbox" class="pick"/></td><td>${row[1]}</td><td>${row[2]}</td><td>${row[3]}</td><td>${row[4]}</td>`;
-      body.appendChild(tr);
+  const load = async () => {
+    const data = await postJSON('get_delivery', { date: input.value });
+    const tbody = $('#deliveryTable tbody');
+    tbody.innerHTML = '';
+    (data.data || []).forEach(r => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td>`;
+      tbody.appendChild(tr);
     });
+  };
+  if (btn) btn.onclick = load;
+  load();
+}
+
+/* ========= TICKETS ========= */
+async function bootTickets() {
+  const btn = $('#makeTicket');
+  const idInput = $('#ticketId');
+  if (btn) btn.onclick = async () => {
+    if (!idInput.value.trim()) return alert('ID kosong');
+    const resp = await postJSON('get_order', { id: idInput.value.trim() });
+    openTicketPrint(resp.data);
+  };
+}
+
+function openTicketPrint(order) {
+  // QR payload: JSON lengkap (sesuai permintaan)
+  const payload = {
+    id: order.id,
+    customer: order.customer,
+    prodNo: order.prodNo,
+    prodName: order.prodName,
+    qty: order.quantity
+  };
+  // vCard-like sekalian (opsional)
+  const vcard = `BEGIN:VCARD
+VERSION:3.0
+N:${order.prodName}
+NOTE:Customer=${order.customer};ProdNo=${order.prodNo};Qty=${order.quantity}
+END:VCARD`;
+
+  // generate QR (qrcode-generator lib)
+  const qr = qrcode(4,'L'); // vers 4, L
+  qr.addData(JSON.stringify(payload));
+  qr.make();
+  const imgTag = qr.createImgTag(4,4); // <img ...>
+
+  const html = `
+  <html><head><title>現品票 ${order.prodNo}</title>
+  <style>
+    @page{size:A4;margin:10mm}
+    body{font-family:'MS Gothic',system-ui}
+    table{width:100%;border-collapse:collapse}
+    th,td{border:1px solid #000;padding:6px}
+    .watermark{position:fixed;top:45%;left:20%;font-size:72px;color:#0002;transform:rotate(-25deg)}
+    .sig{position:fixed;right:10mm;bottom:10mm;font-size:10px;color:#555}
+  </style></head>
+  <body>
+    <div class="watermark">TOKYO SEIMITSU HATSUJO</div>
+    <h1 style="text-align:center">生産現品票</h1>
+    <table>
+      <tr><th style="width:20%">品番</th><td style="width:30%">${order.partNo||''}</td>
+          <th style="width:20%">品名</th><td style="width:30%">${order.prodName||''}</td></tr>
+      <tr><th>製番</th><td>${order.prodNo||''}</td>
+          <th>数量</th><td>${order.quantity||''}</td></tr>
+      <tr><th>得意先</th><td colspan="3">${order.customer||''}</td></tr>
+    </table>
+    <h3>QR</h3>
+    <div>${imgTag}</div>
+    <pre style="font-size:12px;border:1px dashed #999;padding:6px;margin-top:8px">${vcard}</pre>
+    <div class="sig">digital-signature: TSH-${new Date().getTime()}</div>
+    <script>window.onload=()=>{window.print();}</script>
+  </body></html>`;
+
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const frame = document.getElementById('printFrame');
+  if (frame) {
+    frame.style.height = '900px';
+    frame.src = url;
+  } else {
+    window.open(url, '_blank');
   }
-  $('#btn-filter').addEventListener('click',refresh);
-  $('#btn-print-list').addEventListener('click',()=>{
-    const picked=[]; $$('.pick:checked').forEach(cb=>picked.push(cb.closest('tr').dataset));
-    if(!picked.length) return alert('選択してください。');
-    const w=window.open('','_blank'); const rows=picked.map(x=>`<tr><td>${x.prodNo}</td><td>${x.customer}</td><td>${x.partNo}</td><td>${x.prodName}</td><td>1</td><td></td></tr>`).join('');
-    w.document.write(`<html><head><title>出荷予定リスト</title><style>body{font-family:sans-serif;width:190mm}h1,h3{text-align:center}table{width:100%;border-collapse:collapse;border:1px solid #000}th,td{border:1px solid #000;padding:8px;text-align:center}th{background:#f2f2f2}</style></head><body><h1>出荷予定リスト</h1><h3>出荷日: ${dateInput.value}</h3><table><thead><tr><th>管理番号</th><th>得意先</th><th>品番</th><th>品名</th><th>数量</th><th>備考</th></tr></thead><tbody>${rows}</tbody></table><script>window.onload=function(){window.print();window.close();}</script></body></html>`); w.document.close();
-  });
-  refresh();
 }
-
-/* ---------- TICKETS ---------- */
-async function loadTicketsPage(){
-  bindLogout();
-  const auth = loadAuth(); if(!auth.token) return location.href='index.html';
-  $('#who').textContent = `${auth.user.fullName}（${auth.user.role}）`;
-  const url = new URL(location.href); const id = url.searchParams.get('id');
-  if(!id){ document.body.insertAdjacentHTML('beforeend','<p style="padding:16px">ID がありません。</p>'); return; }
-  const { order, history } = await apiGet('ticket', { id });
-  $('#t-customer').textContent = order.customer;
-  $('#t-prodNo').textContent = order.prodNo;
-  $('#t-prodName').textContent = order.prodName;
-  $('#t-partNo').textContent = order.partNo;
-  $('#t-qty').textContent = order.quantity;
-  $('#t-start').textContent = order.startDate||'';
-
-  const payload = { id:order.id, customer:order.customer, prodNo:order.prodNo, prodName:order.prodName, partNo:order.partNo, qty:order.quantity };
-  const qr = qrcode(4,'L'); qr.addData(JSON.stringify(payload)); qr.make();
-  $('#qrcode').innerHTML = qr.createImgTag(4,8);
-  $('#sig').textContent = `sig:${String(order.id).slice(-6)}-${String(order.quantity).padStart(2,'0')}`;
-
-  const ALL = ["材料準備","レーザ工程","曲げ工程","外枠組立工程","シャッター組立工程","シャッター溶接工程","コーキング工程","外枠塗装工程","組立工程（組立中）","組立工程（組立済）","外注","検査工程","検査済","検査保留","出荷準備","出荷済"];
-  const map = new Map(history.map(h=>[h.status,h]));
-  const body = $('#t-history'); body.innerHTML='';
-  ALL.forEach(st=>{
-    const h = map.get(st);
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${st}</td><td>${h?h.user:''}</td><td>${h?h.timestamp:''}</td><td></td>`;
-    body.appendChild(tr);
-  });
-  $('#btn-print-ticket')?.addEventListener('click',()=>window.print());
-}
-
-/* ---------- Delete order (dashboard) ---------- */
-window.removeOrder = async function(id){
-  if(!confirm('このオーダーを削除しますか？')) return;
-  try{ const r = await apiPost('delete', { id }); alert(r.message||'Deleted'); loadProductionTable(); }
-  catch(e){ alert(e.message); }
-};
-
-/* ---------- Boot ---------- */
-function bootstrap(){
-  // nav hooks agar selalu hidup, terlepas dari halaman
-  $('#nav-dashboard')?.addEventListener('click',()=>location.href='index.html');
-  $('#nav-charts')?.addEventListener('click',()=>location.href='charts.html');
-  $('#nav-delivery')?.addEventListener('click',()=>location.href='delivery.html');
-  $('#nav-tickets')?.addEventListener('click',()=>location.href='tickets.html');
-
-  const page = document.body.getAttribute('data-page')||'dashboard';
-  if(page==='dashboard') return loadDashboard();
-  if(page==='charts')    return loadChartsPage();
-  if(page==='delivery')  return loadDeliveryPage();
-  if(page==='tickets')   return loadTicketsPage();
-}
-document.addEventListener('DOMContentLoaded', bootstrap);
