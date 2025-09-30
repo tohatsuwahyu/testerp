@@ -1,46 +1,45 @@
 <!doctype html>
-<html>
+<html lang="ja">
 <head>
-  <meta charset="utf-8"><title>生産現品票</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="assets/styles.css">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>TSH | 現品票</title>
+  <link rel="stylesheet" href="assets/styles.css"/>
+  <script src="assets/qrcode.min.js"></script>
+  <script defer src="assets/app.js"></script>
+  <style>@media print {.watermark::after{content:'TSH';position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:160px;color:#0002;transform:rotate(-30deg);}}</style>
 </head>
-<body onload="loadTicket()">
-  <div class="container">
-    <nav class="top">
-      <div>
-        <a href="index.html">🏠 ダッシュボード</a>
-        <a href="charts.html">📊 チャート</a>
-        <a href="delivery.html">🛒 出荷予定</a>
-        <a href="tickets.html">🧾 現品票</a>
-      </div>
-      <div>
-        <button class="btn" onclick="toggleTheme()">🌓</button>
-        <button class="btn" onclick="window.print()">🖨️ 印刷</button>
-      </div>
-    </nav>
-
-    <div class="watermark" style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;position:relative">
-      <h2 style="text-align:center;margin:8px 0">生産現品票</h2>
-      <table class="print-table" style="margin-top:10px">
-        <tr><th style="width:18%">品番</th><td id="t-partNo"></td><th style="width:18%">品名</th><td id="t-prodName"></td></tr>
-        <tr><th>製番</th><td id="t-prodNo"></td><th>数量</th><td id="t-qty"></td></tr>
-        <tr><th>得意先</th><td colspan="3" id="t-customer"></td></tr>
-      </table>
-
-      <h3 style="margin-top:16px">工程履歴</h3>
-      <table class="print-table">
-        <thead><tr><th>工程名</th><th>担当</th><th>日付</th><th>備考</th></tr></thead>
-        <tbody id="hist-body"><tr><td colspan="4" style="text-align:center;color:#666">印刷後、手書き欄</td></tr></tbody>
-      </table>
-
-      <div id="qrcode" style="text-align:center;margin:16px 0"></div>
-
-      <div class="tiny-sign" id="tiny-sign"></div>
-    </div>
+<body data-page="tickets" class="watermark">
+<header class="topbar">
+  <nav class="left">
+    <button id="nav-dashboard" class="nav-btn">🏭 ダッシュボード</button>
+    <button id="nav-charts" class="nav-btn">📊 チャート</button>
+    <button id="nav-delivery" class="nav-btn">📦 出荷予定</button>
+    <button id="nav-tickets" class="nav-btn active">🧾 現品票</button>
+  </nav>
+  <div class="right">
+    <span id="who"></span>
+    <button id="btn-logout" class="nav-btn">🚪 ログアウト</button>
+  </div>
+</header>
+<main class="container">
+  <div class="card">
+    <h2>生産現品票</h2>
+    <table class="kv">
+      <tr><th>得意先</th><td id="t-customer"></td><th>製番号</th><td id="t-prodNo"></td></tr>
+      <tr><th>品名</th><td id="t-prodName"></td><th>品番</th><td id="t-partNo"></td></tr>
+      <tr><th>数量</th><td id="t-qty"></td><th>開始日</th><td id="t-start"></td></tr>
+    </table>
+    <div id="qrcode" class="qr"></div>
+    <small id="sig" class="sig"></small>
+    <button id="btn-print-ticket">🖨️ 印刷</button>
   </div>
 
-  <script src="assets/qrcode.min.js"></script>
-  <script src="assets/app.js"></script>
+  <div class="card">
+    <h3>工程履歴</h3>
+    <table class="table"><thead><tr><th>工程</th><th>担当</th><th>日時</th><th>備考</th></tr></thead>
+      <tbody id="t-history"></tbody></table>
+  </div>
+</main>
 </body>
 </html>
