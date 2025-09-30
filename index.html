@@ -7,45 +7,54 @@
   <link rel="stylesheet" href="assets/styles.css"/>
   <script defer src="assets/app.js"></script>
 </head>
-<body data-page="dashboard">
-<header class="topbar">
-  <nav class="left">
-    <button id="nav-dashboard" class="nav-btn">🏭 ダッシュボード</button>
-    <button id="nav-charts" class="nav-btn">📊 チャート</button>
-    <button id="nav-delivery" class="nav-btn">📦 出荷予定</button>
-    <button id="nav-tickets" class="nav-btn">🧾 現品票</button>
-  </nav>
-  <div class="right">
-    <span id="user-info"></span>
-    <button id="btn-logout" class="nav-btn">🚪 ログアウト</button>
-  </div>
-</header>
-
-<main class="container">
-  <section id="login-card" class="card hidden">
-    <h2>生産管理ログイン</h2>
-    <form id="login-form">
-      <input id="username" placeholder="ユーザー名" autocomplete="username"/>
-      <input id="password" type="password" placeholder="パスワード" autocomplete="current-password"/>
-      <button type="submit" class="primary">ログイン</button>
-      <p id="login-error" class="error"></p>
-    </form>
-  </section>
-
-  <section id="app" class="hidden">
-    <div class="toolbar">
-      <button id="btn-export">📄 CSVエクスポート</button>
-      <button id="btn-print">🖨️ 印刷</button>
+<body>
+  <header class="topbar">
+    <nav class="nav">
+      <a href="./index.html" class="btn">🏠 ダッシュボード</a>
+      <a href="./charts.html" class="btn">📊 チャート</a>
+      <a href="./delivery.html" class="btn">📦 出荷予定</a>
+      <a href="./tickets.html" class="btn">🧾 現品票</a>
+    </nav>
+    <div class="actions">
+      <span id="whoami" class="who"></span>
+      <button id="logoutBtn" class="btn outline">🔓 ログアウト</button>
     </div>
-    <div class="table-wrap">
-      <table class="table">
-        <thead>
-          <tr><th>得意先</th><th>製番号</th><th>品名</th><th class="right">数量</th><th>生産開始日</th><th>ステータス</th><th>最終更新</th><th>操作</th></tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-      </table>
-    </div>
-  </section>
-</main>
+  </header>
+
+  <main class="container">
+    <section id="loginCard" class="card">
+      <h2>東京精密発條株式会社システムログイン</h2>
+      <div class="row">
+        <input id="username" placeholder="username" value="admin"/>
+        <input id="password" placeholder="password" type="password"/>
+        <button id="loginBtn" class="btn primary">ログイン</button>
+      </div>
+      <p id="loginMsg" class="muted"></p>
+    </section>
+
+    <section id="dashboard" class="hidden">
+      <h2>ダッシュボード</h2>
+      <div class="grid">
+        <div class="card">
+          <h3>完成品在庫</h3>
+          <div id="stockNumber" class="big">0</div>
+        </div>
+        <div class="card">
+          <h3>生産テーブル</h3>
+          <div class="table-wrap">
+            <table id="prodTable">
+              <thead>
+                <tr>
+                  <th>得意先</th><th>製番</th><th>品名</th><th>数量</th>
+                  <th>開始日</th><th>ステータス</th><th>最終更新</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
 </body>
 </html>
