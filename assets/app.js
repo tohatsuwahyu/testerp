@@ -1,7 +1,7 @@
 /* ===========================
    TSH Frontend App — app.js
    =========================== */
-const API_BASE = "https://script.google.com/macros/s/AKfycbwqwycLMS5k1vu51EzhpoXksdUOnkRoGsgtfpisbZfJcDHN62wMpaWS-18TVFONUTBAmg/exec"; // <--- ganti
+const API_BASE = "https://script.google.com/macros/s/AKfycbwqwycLMS5k1vu51EzhpoXksdUOnkRoGsgtfpisbZfJcDHN62wMpaWS-18TVFONUTBAmg/exec"; // 
 
 const REFRESH_MS = 15000;
 const $ = (s,r=document)=>r.querySelector(s);
