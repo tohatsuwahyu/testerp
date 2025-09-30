@@ -1,99 +1,51 @@
 <!doctype html>
-<html>
+<html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <title>TSH｜ダッシュボード</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="assets/styles.css">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>TSH | ダッシュボード</title>
+  <link rel="stylesheet" href="assets/styles.css"/>
+  <script defer src="assets/app.js"></script>
 </head>
-<body onload="loadDashboard()">
-  <div class="container">
-    <nav class="top">
-      <div>
-        <a href="index.html">🏠 ダッシュボード</a>
-        <a href="charts.html">📊 チャート</a>
-        <a href="delivery.html">🛒 出荷予定</a>
-        <a href="tickets.html">🧾 現品票</a>
-      </div>
-      <div>
-        <button class="btn" onclick="toggleTheme()">🌓</button>
-        <span id="user-info"></span>
-        <button class="btn" onclick="logout()">ログアウト</button>
-      </div>
-    </nav>
-
-    <!-- Login -->
-    <div id="login-card">
-      <h2>ログイン</h2>
-      <form id="login-form">
-        <input class="input" id="username" placeholder="Username" autocomplete="username"><br><br>
-        <input class="input" id="password" placeholder="Password" type="password" autocomplete="current-password"><br>
-        <div id="login-error"></div>
-        <div class="row" style="justify-content:space-between;margin-top:10px">
-          <button class="btn primary" type="submit">ログイン</button>
-          <button class="btn" type="button" onclick="doLogin()">➡️</button>
-        </div>
-      </form>
-    </div>
-
-    <!-- App -->
-    <div id="app" style="display:none">
-      <div class="row" style="justify-content:space-between;margin:10px 0">
-        <h2>現在の生産状況</h2>
-        <div class="row">
-          <button class="btn primary" data-roles="生産管理部,admin" onclick="openNew()">+ 新規計画</button>
-        </div>
-      </div>
-
-      <div class="table-wrap">
-        <table class="table">
-          <thead><tr>
-            <th>得意先</th><th>製番号</th><th>品名</th><th>数量</th>
-            <th>生産開始日</th><th>ステータス</th><th>最終更新</th><th>アクション</th>
-          </tr></thead>
-          <tbody id="table-body"></tbody>
-        </table>
-      </div>
-    </div>
+<body data-page="dashboard">
+<header class="topbar">
+  <nav class="left">
+    <button id="nav-dashboard" class="nav-btn">🏭 ダッシュボード</button>
+    <button id="nav-charts" class="nav-btn">📊 チャート</button>
+    <button id="nav-delivery" class="nav-btn">📦 出荷予定</button>
+    <button id="nav-tickets" class="nav-btn">🧾 現品票</button>
+  </nav>
+  <div class="right">
+    <span id="user-info"></span>
+    <button id="btn-logout" class="nav-btn">🚪 ログアウト</button>
   </div>
+</header>
 
-  <!-- Modal Order -->
-  <div id="orderModal" class="modal"><div class="box">
-    <h3 id="modal-title">新規生産計画</h3>
-    <input type="hidden" id="editId">
-    <div class="row"><select id="customer" class="input" style="flex:1"></select></div><br>
-    <div class="row">
-      <select id="drawNo" class="input" style="flex:1"></select>
-      <select id="prodName" class="input" style="flex:1"></select>
-    </div><br>
-    <div class="row">
-      <input class="input" id="prodNo" placeholder="製番号" style="flex:1">
-      <input class="input" id="partNo" placeholder="品番" style="flex:1">
-    </div><br>
-    <div class="row">
-      <input class="input" id="quantity" type="number" min="1" value="1" style="flex:1">
-      <input class="input" id="startDate" type="date" style="flex:1">
-    </div><br>
-    <div class="row" style="justify-content:flex-end;gap:8px">
-      <button class="btn" onclick="closeModal('#orderModal')">閉じる</button>
-      <button class="btn primary" onclick="submitOrder()">保存</button>
+<main class="container">
+  <section id="login-card" class="card hidden">
+    <h2>生産管理ログイン</h2>
+    <form id="login-form">
+      <input id="username" placeholder="ユーザー名" autocomplete="username"/>
+      <input id="password" type="password" placeholder="パスワード" autocomplete="current-password"/>
+      <button type="submit" class="primary">ログイン</button>
+      <p id="login-error" class="error"></p>
+    </form>
+  </section>
+
+  <section id="app" class="hidden">
+    <div class="toolbar">
+      <button id="btn-export">📄 CSVエクスポート</button>
+      <button id="btn-print">🖨️ 印刷</button>
     </div>
-  </div></div>
-
-  <!-- Modal Status -->
-  <div id="statusModal" class="modal"><div class="box">
-    <h3 id="status-title">ステータス更新</h3>
-    <select id="status-select" class="input"></select><br>
-    <div id="shipDateWrap" style="display:none">
-      <label>出荷予定日</label>
-      <input id="shipDate" class="input" type="date">
-    </div><br>
-    <div class="row" style="justify-content:flex-end;gap:8px">
-      <button class="btn" onclick="closeModal('#statusModal')">閉じる</button>
-      <button class="btn primary" onclick="submitStatus()">更新</button>
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr><th>得意先</th><th>製番号</th><th>品名</th><th class="right">数量</th><th>生産開始日</th><th>ステータス</th><th>最終更新</th><th>操作</th></tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
     </div>
-  </div></div>
-
-  <script src="assets/app.js"></script>
+  </section>
+</main>
 </body>
 </html>
