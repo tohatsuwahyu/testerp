@@ -1,41 +1,35 @@
 <!doctype html>
-<html>
+<html lang="ja">
 <head>
-  <meta charset="utf-8"><title>チャート</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="assets/styles.css">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>TSH | チャート</title>
+  <link rel="stylesheet" href="assets/styles.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="assets/app.js"></script>
 </head>
-<body onload="loadCharts()">
-  <div class="container">
-    <nav class="top">
-      <div>
-        <a href="index.html">🏠 ダッシュボード</a>
-        <a href="charts.html">📊 チャート</a>
-        <a href="delivery.html">🛒 出荷予定</a>
-        <a href="tickets.html">🧾 現品票</a>
-      </div>
-      <div>
-        <button class="btn" onclick="toggleTheme()">🌓</button>
-        <button class="btn" onclick="logout()">ログアウト</button>
-      </div>
-    </nav>
-
-    <h2>チャート</h2>
-    <div class="row" style="gap:20px;flex-wrap:wrap">
-      <div style="flex:1;min-width:280px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px">
-        <h3>完成品在庫</h3>
-        <div id="stock-number" style="font-size:36px;font-weight:700;text-align:center">0</div>
-      </div>
-      <div style="flex:2;min-width:280px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px">
-        <h3>月別出荷数</h3>
-        <canvas id="chart-monthly" width="800" height="300"></canvas>
-      </div>
-      <div style="flex:1;min-width:280px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px">
-        <h3>顧客別出荷数</h3>
-        <canvas id="chart-customer" width="300" height="240"></canvas>
-      </div>
-    </div>
+<body data-page="charts">
+<header class="topbar">
+  <nav class="left">
+    <button id="nav-dashboard" class="nav-btn">🏭 ダッシュボード</button>
+    <button id="nav-charts" class="nav-btn active">📊 チャート</button>
+    <button id="nav-delivery" class="nav-btn">📦 出荷予定</button>
+    <button id="nav-tickets" class="nav-btn">🧾 現品票</button>
+  </nav>
+  <div class="right">
+    <span id="who"></span>
+    <button id="btn-logout" class="nav-btn">🚪 ログアウト</button>
   </div>
-  <script src="assets/app.js"></script>
+</header>
+<main class="container">
+  <div class="grid-3">
+    <div class="card center">
+      <h3>完成品在庫</h3>
+      <div id="stock-display" class="big">0</div>
+    </div>
+    <div class="card"><h3>月別出荷数</h3><canvas id="monthlyShipmentsChart"></canvas></div>
+    <div class="card"><h3>顧客別出荷数</h3><canvas id="customerShipmentsChart"></canvas></div>
+  </div>
+</main>
 </body>
 </html>
