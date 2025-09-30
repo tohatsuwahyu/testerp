@@ -1,37 +1,38 @@
 <!doctype html>
-<html>
+<html lang="ja">
 <head>
-  <meta charset="utf-8"><title>出荷予定</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <link rel="stylesheet" href="assets/styles.css">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>TSH | 出荷予定</title>
+  <link rel="stylesheet" href="assets/styles.css"/>
+  <script defer src="assets/app.js"></script>
 </head>
-<body onload="document.getElementById('delivery-date').value=(new Date(Date.now()-new Date().getTimezoneOffset()*60000)).toISOString().slice(0,10); loadDelivery();">
-  <div class="container">
-    <nav class="top">
-      <div>
-        <a href="index.html">🏠 ダッシュボード</a>
-        <a href="charts.html">📊 チャート</a>
-        <a href="delivery.html">🛒 出荷予定</a>
-        <a href="tickets.html">🧾 現品票</a>
-      </div>
-      <div>
-        <button class="btn" onclick="toggleTheme()">🌓</button>
-        <button class="btn" onclick="logout()">ログアウト</button>
-      </div>
-    </nav>
-
-    <h2>出荷予定</h2>
-    <div class="row" style="gap:8px;margin:10px 0">
-      <input id="delivery-date" class="input" type="date" style="max-width:200px">
-      <button class="btn" onclick="loadDelivery()">再読み込み</button>
-      <button class="btn primary" onclick="printSelectedDelivery()">印刷</button>
-    </div>
-
+<body data-page="delivery">
+<header class="topbar">
+  <nav class="left">
+    <button id="nav-dashboard" class="nav-btn">🏭 ダッシュボード</button>
+    <button id="nav-charts" class="nav-btn">📊 チャート</button>
+    <button id="nav-delivery" class="nav-btn active">📦 出荷予定</button>
+    <button id="nav-tickets" class="nav-btn">🧾 現品票</button>
+  </nav>
+  <div class="right">
+    <span id="who"></span>
+    <button id="btn-logout" class="nav-btn">🚪 ログアウト</button>
+  </div>
+</header>
+<main class="container">
+  <div class="toolbar">
+    <label>出荷予定日:</label>
+    <input type="date" id="delivery-date"/>
+    <button id="btn-filter">絞り込み</button>
+    <button id="btn-print-list">🖨️ 選択印刷</button>
+  </div>
+  <div class="table-wrap">
     <table class="table">
       <thead><tr><th></th><th>得意先</th><th>製番号</th><th>品名</th><th>品番</th></tr></thead>
       <tbody id="delivery-body"></tbody>
     </table>
   </div>
-  <script src="assets/app.js"></script>
+</main>
 </body>
 </html>
