@@ -8,28 +8,27 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script defer src="assets/app.js"></script>
 </head>
-<body data-page="charts">
-<header class="topbar">
-  <nav class="left">
-    <button id="nav-dashboard" class="nav-btn">🏭 ダッシュボード</button>
-    <button id="nav-charts" class="nav-btn active">📊 チャート</button>
-    <button id="nav-delivery" class="nav-btn">📦 出荷予定</button>
-    <button id="nav-tickets" class="nav-btn">🧾 現品票</button>
-  </nav>
-  <div class="right">
-    <span id="who"></span>
-    <button id="btn-logout" class="nav-btn">🚪 ログアウト</button>
-  </div>
-</header>
-<main class="container">
-  <div class="grid-3">
-    <div class="card center">
-      <h3>完成品在庫</h3>
-      <div id="stock-display" class="big">0</div>
+<body>
+  <header class="topbar">
+    <nav class="nav">
+      <a href="./index.html" class="btn">🏠 ダッシュボード</a>
+      <a href="./charts.html" class="btn">📊 チャート</a>
+      <a href="./delivery.html" class="btn">📦 出荷予定</a>
+      <a href="./tickets.html" class="btn">🧾 現品票</a>
+    </nav>
+    <div class="actions">
+      <span id="whoami" class="who"></span>
+      <button id="logoutBtn" class="btn outline">🔓 ログアウト</button>
     </div>
-    <div class="card"><h3>月別出荷数</h3><canvas id="monthlyShipmentsChart"></canvas></div>
-    <div class="card"><h3>顧客別出荷数</h3><canvas id="customerShipmentsChart"></canvas></div>
-  </div>
-</main>
+  </header>
+
+  <main class="container">
+    <h2>チャート</h2>
+    <div class="grid">
+      <div class="card"><h3>完成品在庫</h3><div id="stockNumber" class="big">0</div></div>
+      <div class="card"><h3>月別出荷数</h3><canvas id="monthly"></canvas></div>
+      <div class="card"><h3>顧客別出荷数</h3><canvas id="customer"></canvas></div>
+    </div>
+  </main>
 </body>
 </html>
